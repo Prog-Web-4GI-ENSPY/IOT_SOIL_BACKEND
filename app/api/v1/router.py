@@ -1,14 +1,18 @@
 from fastapi import APIRouter
+from app.routers import auth_router, users_router
 
-# Importez tous vos routeurs spécifiques
-
-# Définissez le routeur principal qui sera importé dans main.py
 api_router = APIRouter()
 
-# Incluez vos sous-routeurs
-# Note : Ici, nous utilisons un chemin vide car le préfixe sera géré dans main.py
-#api_router.include_router(parcelles.router, tags=["Parcelles"]) 
+# Authentication endpoints
+api_router.include_router(
+    auth_router.router,
+    prefix="/auth",
+    tags=["Authentication"]
+)
 
-# Ajoutez d'autres routeurs ici :
-# api_router.include_router(users.router, tags=["Users"])
-# api_router.include_router(cultures.router, tags=["Cultures"])
+# User management endpoints
+api_router.include_router(
+    users_router.router,
+    prefix="/users",
+    tags=["Users"]
+)

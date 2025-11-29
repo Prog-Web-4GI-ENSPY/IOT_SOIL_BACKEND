@@ -1,0 +1,27 @@
+from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey
+from sqlalchemy.orm import relationship
+from datetime import datetime
+from .base import BaseModel
+
+class Recommendation(BaseModel):
+    """
+    Modèle SQLAlchemy pour une recommandation d'action agricole.
+    """
+    __tablename__ = "recommendations"
+
+    # Fields
+    titre = Column(String, nullable=False)
+    contenu = Column(Text, nullable=False)
+    priorite = Column(String, default="Normal", nullable=False) # Ex: 'Urgent', 'Normal', 'Faible'
+    date_emission = Column(DateTime, default=datetime.utcnow, nullable=False)
+    
+    # Relationships
+    parcelle_id = Column(Integer, ForeignKey("parcelles.id"), nullable=False)
+    parcelle = relationship("Parcelle", back_populates="recommendations")
+
+    # Optional: Link to the prediction that triggered it
+    # prediction_id = Column(Integer, ForeignKey("predictions.id"), nullable=True)
+    # prediction = relationship("Prediction")
+
+    def __repr__(self):
+        return f"<Recommendation(id={self.id}, titre='{self.titre}', priorite='{self.priorite}')>"

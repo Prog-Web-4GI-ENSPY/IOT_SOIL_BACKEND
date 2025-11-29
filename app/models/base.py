@@ -3,16 +3,19 @@ from sqlalchemy import Column, String, DateTime
 from sqlalchemy.ext.declarative import declarative_base
 import uuid
 
-
-# The base class which all models will inherit from
 Base = declarative_base()
+
+# Fonction pour générer un UUID hexadécimal (ou la méthode que vous utilisez)
+def generate_uuid_as_string():
+    return str(uuid.uuid4())
 
 class BaseModel(Base):
     """
-    Base model class with common fields.
+    Base model class with UUID primary key.
     """
-    __abstract__ = True  # Tells SQLAlchemy not to create a table for this class
+    __abstract__ = True 
 
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    # CLÉ PRIMAIRE DÉFINIE COMME STRING DE 36 CARACTÈRES (UUID)
+    id = Column(String(36), primary_key=True, index=True, default=generate_uuid_as_string)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)

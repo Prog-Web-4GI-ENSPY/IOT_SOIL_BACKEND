@@ -18,6 +18,8 @@ class UserStatus(str, enum.Enum):
     PENDING = "pending"
 
 
+
+
 class User(BaseModel):
     __tablename__ = "users"
 

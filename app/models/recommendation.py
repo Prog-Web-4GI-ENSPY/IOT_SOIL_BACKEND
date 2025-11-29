@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey
+from sqlalchemy import Column, String, Text, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from .base import BaseModel
@@ -16,7 +16,7 @@ class Recommendation(BaseModel):
     date_emission = Column(DateTime, default=datetime.utcnow, nullable=False)
     
     # Relationships
-    parcelle_id = Column(Integer, ForeignKey("parcelles.id"), nullable=False)
+    parcelle_id = Column(String(36), ForeignKey("parcelles.id"), nullable=False, index=True)
     parcelle = relationship("Parcelle", back_populates="recommendations")
 
     # Optional: Link to the prediction that triggered it

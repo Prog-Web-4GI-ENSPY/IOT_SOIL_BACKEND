@@ -2,22 +2,20 @@ import pytest
 from typing import Generator
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.pool import StaticPool
-
-from app.main import app
+from sqlalchemy.orm import sessionmaker, Session
 from app.database import get_db
 from app.models.base import Base
-from app.core.security import create_access_token
 from app.models.user import User, UserRole, UserStatus
+from app.core.security import get_password_hash
+from main import app
+from datetime import datetime
 
 # Base de données de test en mémoire
-SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
+SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
 
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL,
-    connect_args={"check_same_thread": False},
-    poolclass=StaticPool,
+    connect_args={"check_same_thread": False}
 )
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 

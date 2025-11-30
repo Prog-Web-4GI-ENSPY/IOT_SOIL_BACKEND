@@ -14,45 +14,45 @@ class UserService:
     @staticmethod
     def get_user_by_id(db: Session, user_id: str) -> Optional[User]:
         """
-        Récupère un utilisateur par son ID
+        Recupere un utilisateur par son ID
 
         Args:
-            db: Session de base de données
+            db: Session de base de donnees
             user_id: ID de l'utilisateur
 
         Returns:
-            User ou None si non trouvé
+            User ou None si non trouve
         """
         return db.query(User).filter(User.id == user_id).first()
 
     @staticmethod
     def get_user_by_email(db: Session, email: str) -> Optional[User]:
         """
-        Récupère un utilisateur par son email
+        Rï¿½cupï¿½re un utilisateur par son email
 
         Args:
-            db: Session de base de données
+            db: Session de base de donnï¿½es
             email: Email de l'utilisateur
 
         Returns:
-            User ou None si non trouvé
+            User ou None si non trouvï¿½
         """
         return db.query(User).filter(User.email == email).first()
 
     @staticmethod
     def create_user(db: Session, user_data: UserCreate) -> User:
         """
-        Crée un nouvel utilisateur
+        Crï¿½e un nouvel utilisateur
 
         Args:
-            db: Session de base de données
-            user_data: Données de l'utilisateur à créer
+            db: Session de base de donnï¿½es
+            user_data: Donnï¿½es de l'utilisateur ï¿½ crï¿½er
 
         Returns:
-            User créé
+            User crï¿½ï¿½
 
         Raises:
-            HTTPException: Si l'email existe déjà
+            HTTPException: Si l'email existe dï¿½jï¿½
         """
         existing_user = UserService.get_user_by_email(db, user_data.email)
         if existing_user:
@@ -90,15 +90,15 @@ class UserService:
     @staticmethod
     def update_user(db: Session, user_id: str, user_data: UserUpdate) -> User:
         """
-        Met à jour un utilisateur
+        Met ï¿½ jour un utilisateur
 
         Args:
-            db: Session de base de données
+            db: Session de base de donnï¿½es
             user_id: ID de l'utilisateur
-            user_data: Données de mise à jour
+            user_data: Donnï¿½es de mise ï¿½ jour
 
         Returns:
-            User mis à jour
+            User mis ï¿½ jour
 
         Raises:
             HTTPException: Si l'utilisateur n'existe pas
@@ -128,11 +128,11 @@ class UserService:
         Supprime un utilisateur
 
         Args:
-            db: Session de base de données
+            db: Session de base de donnï¿½es
             user_id: ID de l'utilisateur
 
         Returns:
-            True si supprimé avec succès
+            True si supprimï¿½ avec succï¿½s
 
         Raises:
             HTTPException: Si l'utilisateur n'existe pas
@@ -154,12 +154,12 @@ class UserService:
         Authentifie un utilisateur
 
         Args:
-            db: Session de base de données
+            db: Session de base de donnï¿½es
             email: Email de l'utilisateur
             password: Mot de passe
 
         Returns:
-            User si l'authentification réussit, None sinon
+            User si l'authentification rï¿½ussit, None sinon
         """
         user = UserService.get_user_by_email(db, email)
         if not user:
@@ -179,13 +179,13 @@ class UserService:
         Change le mot de passe d'un utilisateur
 
         Args:
-            db: Session de base de données
+            db: Session de base de donnï¿½es
             user: Utilisateur
             old_password: Ancien mot de passe
             new_password: Nouveau mot de passe
 
         Returns:
-            User mis à jour
+            User mis ï¿½ jour
 
         Raises:
             HTTPException: Si l'ancien mot de passe est incorrect
@@ -204,14 +204,14 @@ class UserService:
     @staticmethod
     def update_last_access(db: Session, user: User) -> User:
         """
-        Met à jour la date du dernier accès
+        Met ï¿½ jour la date du dernier accï¿½s
 
         Args:
-            db: Session de base de données
+            db: Session de base de donnï¿½es
             user: Utilisateur
 
         Returns:
-            User mis à jour
+            User mis ï¿½ jour
         """
         user.dernier_acces = datetime.utcnow()
         db.commit()
@@ -228,12 +228,12 @@ class UserService:
         Change le statut d'un utilisateur
 
         Args:
-            db: Session de base de données
+            db: Session de base de donnï¿½es
             user_id: ID de l'utilisateur
             new_status: Nouveau statut
 
         Returns:
-            User mis à jour
+            User mis ï¿½ jour
 
         Raises:
             HTTPException: Si l'utilisateur n'existe pas
@@ -259,14 +259,14 @@ class UserService:
         role: Optional[UserRole] = None
     ) -> list[User]:
         """
-        Récupère tous les utilisateurs avec filtres optionnels
+        Rï¿½cupï¿½re tous les utilisateurs avec filtres optionnels
 
         Args:
-            db: Session de base de données
-            skip: Nombre d'utilisateurs à sauter
-            limit: Nombre maximum d'utilisateurs à retourner
+            db: Session de base de donnï¿½es
+            skip: Nombre d'utilisateurs ï¿½ sauter
+            limit: Nombre maximum d'utilisateurs ï¿½ retourner
             status: Filtre par statut
-            role: Filtre par rôle
+            role: Filtre par rï¿½le
 
         Returns:
             Liste d'utilisateurs

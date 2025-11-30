@@ -19,7 +19,7 @@ def get_my_profile(
     current_user: User = Depends(get_current_active_user)
 ):
     """
-    Récupère le profil de l'utilisateur connecté
+    Rï¿½cupï¿½re le profil de l'utilisateur connecte
 
     Args:
         current_user: L'utilisateur actuel
@@ -37,15 +37,15 @@ def update_my_profile(
     db: Session = Depends(get_db)
 ):
     """
-    Met à jour le profil de l'utilisateur connecté
+    Met ï¿½ jour le profil de l'utilisateur connectï¿½
 
     Args:
-        user_data: Données de mise à jour
+        user_data: Donnï¿½es de mise ï¿½ jour
         current_user: L'utilisateur actuel
-        db: Session de base de données
+        db: Session de base de donnï¿½es
 
     Returns:
-        UserResponse: Profil mis à jour
+        UserResponse: Profil mis ï¿½ jour
     """
     return UserService.update_user(db, str(current_user.id), user_data)
 
@@ -60,15 +60,15 @@ def get_all_users(
     db: Session = Depends(get_db)
 ):
     """
-    Récupère tous les utilisateurs (Admin uniquement)
+    Rï¿½cupï¿½re tous les utilisateurs (Admin uniquement)
 
     Args:
-        skip: Nombre d'utilisateurs à sauter
-        limit: Nombre maximum d'utilisateurs à retourner
+        skip: Nombre d'utilisateurs ï¿½ sauter
+        limit: Nombre maximum d'utilisateurs ï¿½ retourner
         status: Filtre par statut
-        role: Filtre par rôle
-        current_user: L'utilisateur actuel (doit être admin)
-        db: Session de base de données
+        role: Filtre par rï¿½le
+        current_user: L'utilisateur actuel (doit ï¿½tre admin)
+        db: Session de base de donnï¿½es
 
     Returns:
         List[UserResponse]: Liste des utilisateurs
@@ -83,12 +83,12 @@ def get_user_by_id(
     db: Session = Depends(get_db)
 ):
     """
-    Récupère un utilisateur par son ID (Admin uniquement)
+    Rï¿½cupï¿½re un utilisateur par son ID (Admin uniquement)
 
     Args:
         user_id: ID de l'utilisateur
-        current_user: L'utilisateur actuel (doit être admin)
-        db: Session de base de données
+        current_user: L'utilisateur actuel (doit ï¿½tre admin)
+        db: Session de base de donnï¿½es
 
     Returns:
         UserResponse: L'utilisateur
@@ -113,16 +113,16 @@ def update_user(
     db: Session = Depends(get_db)
 ):
     """
-    Met à jour un utilisateur (Admin uniquement)
+    Met ï¿½ jour un utilisateur (Admin uniquement)
 
     Args:
         user_id: ID de l'utilisateur
-        user_data: Données de mise à jour
-        current_user: L'utilisateur actuel (doit être admin)
-        db: Session de base de données
+        user_data: Donnï¿½es de mise ï¿½ jour
+        current_user: L'utilisateur actuel (doit ï¿½tre admin)
+        db: Session de base de donnï¿½es
 
     Returns:
-        UserResponse: Utilisateur mis à jour
+        UserResponse: Utilisateur mis ï¿½ jour
     """
     return UserService.update_user(db, user_id, user_data)
 
@@ -138,14 +138,14 @@ def delete_user(
 
     Args:
         user_id: ID de l'utilisateur
-        current_user: L'utilisateur actuel (doit être admin)
-        db: Session de base de données
+        current_user: L'utilisateur actuel (doit ï¿½tre admin)
+        db: Session de base de donnï¿½es
 
     Returns:
         Statut 204 No Content
 
     Raises:
-        HTTPException: Si l'utilisateur tente de se supprimer lui-même
+        HTTPException: Si l'utilisateur tente de se supprimer lui-mï¿½me
     """
     if str(current_user.id) == user_id:
         raise HTTPException(
@@ -170,11 +170,11 @@ def change_user_status(
     Args:
         user_id: ID de l'utilisateur
         new_status: Nouveau statut
-        current_user: L'utilisateur actuel (doit être admin)
-        db: Session de base de données
+        current_user: L'utilisateur actuel (doit ï¿½tre admin)
+        db: Session de base de donnï¿½es
 
     Returns:
-        UserResponse: Utilisateur avec le statut mis à jour
+        UserResponse: Utilisateur avec le statut mis ï¿½ jour
 
     Raises:
         HTTPException: Si l'utilisateur tente de changer son propre statut
@@ -199,11 +199,11 @@ def activate_user(
 
     Args:
         user_id: ID de l'utilisateur
-        current_user: L'utilisateur actuel (doit être admin)
-        db: Session de base de données
+        current_user: L'utilisateur actuel (doit ï¿½tre admin)
+        db: Session de base de donnï¿½es
 
     Returns:
-        UserResponse: Utilisateur activé
+        UserResponse: Utilisateur activï¿½
     """
     return UserService.change_user_status(db, user_id, UserStatus.ACTIVE)
 
@@ -219,14 +219,14 @@ def suspend_user(
 
     Args:
         user_id: ID de l'utilisateur
-        current_user: L'utilisateur actuel (doit être admin)
-        db: Session de base de données
+        current_user: L'utilisateur actuel (doit ï¿½tre admin)
+        db: Session de base de donnï¿½es
 
     Returns:
         UserResponse: Utilisateur suspendu
 
     Raises:
-        HTTPException: Si l'utilisateur tente de se suspendre lui-même
+        HTTPException: Si l'utilisateur tente de se suspendre lui-mï¿½me
     """
     if str(current_user.id) == user_id:
         raise HTTPException(

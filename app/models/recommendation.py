@@ -18,7 +18,7 @@ class Recommendation(BaseModel):
     
     # Relationships
     parcelle_id = Column(String(36), ForeignKey("parcelles.id"), nullable=False, index=True)
-    parcelle = relationship("Parcelle", back_populates="recommendations")
+    parcelle = relationship("Parcelle", back_populates="recommandations")
 
     # Optional: Link to the prediction that triggered it
     # prediction_id = Column(Integer, ForeignKey("predictions.id"), nullable=True)

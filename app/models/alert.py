@@ -45,12 +45,12 @@ class Alert(BaseModel):
     
     # Relationships
     parcelle_id = Column(String(36), ForeignKey("parcelles.id"), nullable=False, index=True)
-    parcelle = relationship("Parcelle", back_populates="alerts")
+    parcelle = relationship("Parcelle", back_populates="alertes")
 
     user_id = Column(String(36), ForeignKey("users.id"), nullable=False) 
 
     # Définition de la relation inverse (pour le back_populates)
-    user = relationship("User", back_populates="alerts")
+    user = relationship("User", back_populates="alertes")
     # Optional: Link to the sensor data that triggered it
     # sensor_data_id = Column(Integer, ForeignKey("sensor_data.id"), nullable=True)
     # sensor_data = relationship("SensorData")

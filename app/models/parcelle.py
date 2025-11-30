@@ -60,13 +60,15 @@ class Parcelle(BaseModel):
     systeme_irrigation = Column(SQLEnum(SystemeIrrigation))
     source_eau = Column(String(200))
 
-    sensor_measurements = relationship( "SensorData", back_populates="parcelle" ) 
+    sensor_measurements = relationship( "SensorMeasurements", back_populates="parcelle" ) 
 
     # Relations
     terrain = relationship("Terrain", back_populates="parcelles")
+    recommandations = relationship("Recommendation", back_populates="parcelle")
     culture_actuelle = relationship("Culture")
     capteurs = relationship("Capteur", back_populates="parcelle", cascade="all, delete-orphan")
     historique_cultures = relationship("HistoriqueCulture", back_populates="parcelle", cascade="all, delete-orphan")
+    alertes = relationship("Alert", back_populates="parcelle", cascade="all, delete-orphan")
 
 
 class HistoriqueCulture(BaseModel):

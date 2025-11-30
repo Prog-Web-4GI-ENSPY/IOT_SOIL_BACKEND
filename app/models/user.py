@@ -40,5 +40,5 @@ class User(BaseModel):
     terrains = relationship("Terrain", back_populates="proprietaire", cascade="all, delete-orphan")
     predictions = relationship("Prediction", back_populates="user", cascade="all, delete-orphan")
     recommendations = relationship("Recommendation", back_populates="user", cascade="all, delete-orphan")
-    alertes = relationship("Alerte", back_populates="user", cascade="all, delete-orphan")
+    alertes = relationship("Alert", back_populates="user", cascade="all, delete-orphan")
 

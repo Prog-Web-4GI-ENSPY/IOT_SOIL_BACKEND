@@ -60,6 +60,7 @@ class Parcelle(BaseModel):
     systeme_irrigation = Column(SQLEnum(SystemeIrrigation))
     source_eau = Column(String(200))
 
+    sensor_measurements = relationship( "SensorData", back_populates="parcelle" ) 
 
     # Relations
     terrain = relationship("Terrain", back_populates="parcelles")

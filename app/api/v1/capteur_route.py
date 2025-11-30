@@ -5,7 +5,7 @@ from app.database import get_db
 
 # Importez les schémas, le service et le modèle
 from app.schemas.capteur import Capteur as CapteurSchema, CapteurCreate, CapteurUpdate
-from app.services.capteur_service import capteur_crud
+from app.services.capteur_service import capteur_service
 from app.models.capteur import Capteur
 
 router = APIRouter()
@@ -26,7 +26,7 @@ def create_capteur(
     Crée un capteur. Nécessite `nom`, `dev_eui`, `parcelle_id` et `date_installation`.
     """
     try:
-        capteur = capteur_crud.create(db, obj_in=capteur_in)
+        capteur = capteur_service.create(db, obj_in=capteur_in)
         return capteur
     except ValueError as e:
         # Gère l'erreur de DevEUI déjà existant, levée par le service CRUD
@@ -49,7 +49,7 @@ def read_capteurs(
     """
     Récupère une liste paginée de tous les capteurs.
     """
-    capteurs = capteur_crud.get_multi(db, skip=skip, limit=limit)
+    capteurs = capteur_service.get_capteurs(db, skip=skip, limit=limit)
     return capteurs
 
 # --- 3. Lecture Simple (GET /{id}) ---
@@ -65,7 +65,7 @@ def read_capteur(
     """
     Récupère un capteur spécifique par son UUID.
     """
-    capteur = capteur_crud.get(db, capteur_id=capteur_id)
+    capteur = capteur_service.get(db, capteur_id=capteur_id)
     if not capteur:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, 
@@ -88,7 +88,7 @@ def update_capteur(
     """
     Met à jour un capteur par son UUID.
     """
-    capteur = capteur_crud.get(db, capteur_id=capteur_id)
+    capteur = capteur_service.get(db, capteur_id=capteur_id)
     if not capteur:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, 
@@ -96,7 +96,7 @@ def update_capteur(
         )
     
     try:
-        capteur = capteur_crud.update(db, db_obj=capteur, obj_in=capteur_in)
+        capteur = capteur_service.update(db, db_obj=capteur, obj_in=capteur_in)
         return capteur
     except ValueError as e:
         # Gère l'erreur de DevEUI en conflit lors de la mise à jour
@@ -120,7 +120,7 @@ def delete_capteur(
     Supprime un capteur par son UUID.
     """
     try:
-        capteur = capteur_crud.remove(db, capteur_id=capteur_id)
+        capteur = capteur_service.remove(db, capteur_id=capteur_id)
         return capteur
     except ValueError as e:
         # Gère l'erreur si le capteur n'existe pas

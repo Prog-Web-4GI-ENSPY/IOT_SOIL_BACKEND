@@ -6,12 +6,12 @@ from typing import Optional
 
 # Model config pour tous les schémas, permettant de lire les données
 # directement depuis les objets SQLAlchemy (from_attributes = True)
-class CustomConfig(ConfigDict):
-    from_attributes = True
+CustomConfig = ConfigDict(
+    from_attributes = True,
     # Permet de convertir les champs (ex: CamelCase des JSON en snake_case Python) si nécessaire.
     # alias_generator = to_snake_case 
 
-
+)
 # --- 1. BaseSchema (Pour Création/Mise à Jour) ---
 
 class BaseSchema(BaseModel):

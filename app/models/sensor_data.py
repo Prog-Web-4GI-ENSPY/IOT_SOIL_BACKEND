@@ -18,4 +18,8 @@ class SensorMeasurements(BaseModel):
 
     # Relations
     capteur = relationship("Capteur", back_populates="donnees")
-    parcelle = relationship("Parcelle", back_populates="donnees_capteurs")
+
+    parcelle_id = Column(String(36), ForeignKey("parcelles.id"), nullable=False)
+    
+    # Et assurez-vous que la relation est correcte :
+    parcelle = relationship("Parcelle", back_populates="sensor_measurements")

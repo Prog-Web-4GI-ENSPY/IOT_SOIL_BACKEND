@@ -1,14 +1,14 @@
 from fastapi import APIRouter, Depends, status, Query, Body
 from sqlalchemy.orm import Session
 from typing import List, Optional
-from database import get_db
-from services.recommendation_service import RecommendationService
-from schemas.recommendation import (
-    RecommendationCreate, 
-    RecommendationUpdate, 
+from app.database import get_db
+from app.services.recommendation_service import RecommendationService
+from app.schemas.recommendation import (
+    RecommendationCreate,
+    RecommendationUpdate,
     RecommendationResponse
 )
-from auth.dependencies import get_current_user
+from app.core.dependencies import get_current_user
 
 router = APIRouter(
     prefix="/recommendations",
@@ -36,7 +36,7 @@ async def create_recommendation(
     - **priorite**: Niveau de priorité (Urgent, Normal, Faible)
     """
     return RecommendationService.create_recommendation(
-        db, recommendation_data, current_user["id"]
+        db, recommendation_data, str(current_user.id)
     )
 
 
@@ -59,7 +59,7 @@ async def get_all_recommendations(
     Les recommandations sont triées par date d'émission décroissante.
     """
     return RecommendationService.get_all_recommendations(
-        db, current_user["id"], skip, limit, priorite
+        db, str(current_user.id), skip, limit, priorite
     )
 
 
@@ -82,7 +82,7 @@ async def get_recommendations_by_parcelle(
     Les recommandations sont triées par date d'émission décroissante.
     """
     return RecommendationService.get_recommendations_by_parcelle(
-        db, parcelle_id, current_user["id"], skip, limit, priorite
+        db, parcelle_id, str(current_user.id), skip, limit, priorite
     )
 
 
@@ -100,7 +100,7 @@ async def get_recommendation(
     Récupérer les détails d'une recommandation spécifique.
     """
     return RecommendationService.get_recommendation_by_id(
-        db, recommendation_id, current_user["id"]
+        db, recommendation_id, str(current_user.id)
     )
 
 
@@ -121,7 +121,7 @@ async def update_recommendation(
     Seuls les champs fournis seront mis à jour.
     """
     return RecommendationService.update_recommendation(
-        db, recommendation_id, recommendation_data, current_user["id"]
+        db, recommendation_id, recommendation_data, str(current_user.id)
     )
 
 
@@ -141,7 +141,7 @@ async def delete_recommendation(
     La recommandation ne sera pas physiquement supprimée mais marquée comme supprimée.
     """
     return RecommendationService.delete_recommendation(
-        db, recommendation_id, current_user["id"]
+        db, recommendation_id, str(current_user.id)
     )
 
 
@@ -186,5 +186,5 @@ async def generate_weather_based_recommendation(
     - **forecast_date**: Date de la prévision (optionnel)
     """
     return RecommendationService.generate_weather_based_recommendation(
-        db, parcelle_id, current_user["id"], weather_data
+        db, parcelle_id, str(current_user.id), weather_data
     )

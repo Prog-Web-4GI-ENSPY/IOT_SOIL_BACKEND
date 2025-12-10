@@ -1,8 +1,8 @@
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from fastapi import HTTPException, status
-from models.recommendation import Recommendation
-from schemas.recommendation import RecommendationCreate, RecommendationUpdate
+from app.models.recommendation import Recommendation
+from app.schemas.recommendation import RecommendationCreate, RecommendationUpdate
 from datetime import datetime
 import uuid
 
@@ -18,9 +18,9 @@ class RecommendationService:
     ) -> Recommendation:
         """Créer une nouvelle recommandation"""
         # Vérifier que la parcelle appartient à l'utilisateur
-        from models.parcelle import Parcelle
-        from models.terrain import Terrain
-        
+        from app.models.parcelle import Parcelle
+        from app.models.terrain import Terrain
+
         parcelle = db.query(Parcelle).join(Terrain).filter(
             Parcelle.id == recommendation_data.parcelle_id,
             Terrain.user_id == user_id,
@@ -62,9 +62,9 @@ class RecommendationService:
         user_id: str
     ) -> Recommendation:
         """Récupérer une recommandation par son ID"""
-        from models.parcelle import Parcelle
-        from models.terrain import Terrain
-        
+        from app.models.parcelle import Parcelle
+        from app.models.terrain import Terrain
+
         recommendation = db.query(Recommendation).join(
             Parcelle, Recommendation.parcelle_id == Parcelle.id
         ).join(
@@ -93,9 +93,9 @@ class RecommendationService:
         priorite: Optional[str] = None
     ) -> List[Recommendation]:
         """Récupérer toutes les recommandations d'une parcelle"""
-        from models.parcelle import Parcelle
-        from models.terrain import Terrain
-        
+        from app.models.parcelle import Parcelle
+        from app.models.terrain import Terrain
+
         # Vérifier que la parcelle appartient à l'utilisateur
         parcelle = db.query(Parcelle).join(Terrain).filter(
             Parcelle.id == parcelle_id,
@@ -130,9 +130,9 @@ class RecommendationService:
         priorite: Optional[str] = None
     ) -> List[Recommendation]:
         """Récupérer toutes les recommandations de l'utilisateur"""
-        from models.parcelle import Parcelle
-        from models.terrain import Terrain
-        
+        from app.models.parcelle import Parcelle
+        from app.models.terrain import Terrain
+
         query = db.query(Recommendation).join(
             Parcelle, Recommendation.parcelle_id == Parcelle.id
         ).join(
@@ -212,9 +212,9 @@ class RecommendationService:
         weather_data: dict
     ) -> Recommendation:
         """Générer une recommandation basée sur les données météo"""
-        from models.parcelle import Parcelle
-        from models.terrain import Terrain
-        
+        from app.models.parcelle import Parcelle
+        from app.models.terrain import Terrain
+
         # Vérifier que la parcelle appartient à l'utilisateur
         parcelle = db.query(Parcelle).join(Terrain).filter(
             Parcelle.id == parcelle_id,

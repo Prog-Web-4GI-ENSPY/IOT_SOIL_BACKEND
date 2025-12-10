@@ -2,8 +2,8 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from typing import List, Optional
 from fastapi import HTTPException, status
-from models.terrain import Terrain, StatutTerrain
-from schemas.terrain import TerrainCreate, TerrainUpdate
+from app.models.terrain import Terrain, StatutTerrain
+from app.schemas.terrain import TerrainCreate, TerrainUpdate
 import uuid
 
 

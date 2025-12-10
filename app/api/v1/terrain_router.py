@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Depends, status, Query
 from sqlalchemy.orm import Session
 from typing import List, Optional
-from database import get_db
-from services.terrain_service import TerrainService
-from schemas.terrain import TerrainCreate, TerrainUpdate, TerrainResponse
-from models.terrain import StatutTerrain
-from auth.dependencies import get_current_user  # À adapter selon votre système d'auth
+from app.database import get_db
+from app.services.terrain_service import TerrainService
+from app.schemas.terrain import TerrainCreate, TerrainUpdate, TerrainResponse
+from app.models.terrain import StatutTerrain
+from app.core.dependencies import get_current_user
 
 router = APIRouter(
     prefix="/terrains",
@@ -34,7 +34,7 @@ async def create_terrain(
     - **latitude**: Latitude GPS
     - **longitude**: Longitude GPS
     """
-    return TerrainService.create_terrain(db, terrain_data, current_user["id"])
+    return TerrainService.create_terrain(db, terrain_data, str(current_user.id))
 
 
 @router.get(
@@ -55,7 +55,7 @@ async def get_all_terrains(
     Possibilité de filtrer par statut et paginer les résultats.
     """
     return TerrainService.get_all_terrains(
-        db, current_user["id"], skip, limit, statut
+        db, str(current_user.id), skip, limit, statut
     )
 
 
@@ -72,7 +72,7 @@ async def get_terrain_statistics(
     
     Retourne le nombre de terrains et la superficie totale par statut.
     """
-    return TerrainService.get_terrain_statistics(db, current_user["id"])
+    return TerrainService.get_terrain_statistics(db, str(current_user.id))
 
 
 @router.get(
@@ -88,7 +88,7 @@ async def get_terrain(
     """
     Récupérer les détails d'un terrain spécifique.
     """
-    return TerrainService.get_terrain_by_id(db, terrain_id, current_user["id"])
+    return TerrainService.get_terrain_by_id(db, terrain_id, str(current_user.id))
 
 
 @router.put(
@@ -108,7 +108,7 @@ async def update_terrain(
     Seuls les champs fournis seront mis à jour.
     """
     return TerrainService.update_terrain(
-        db, terrain_id, terrain_data, current_user["id"]
+        db, terrain_id, terrain_data, str(current_user.id)
     )
 
 
@@ -127,4 +127,4 @@ async def delete_terrain(
     
     Le terrain ne sera pas physiquement supprimé mais marqué comme supprimé.
     """
-    return TerrainService.delete_terrain(db, terrain_id, current_user["id"])
+    return TerrainService.delete_terrain(db, terrain_id, str(current_user.id))

@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends, status, Query
 from sqlalchemy.orm import Session
 from typing import List
-from database import get_db
-from services.parcelle_service import ParcelleService
-from schemas.parcelle import ParcelleCreate, ParcelleUpdate, ParcelleResponse
-from auth.dependencies import get_current_user
+from app.database import get_db
+from app.services.parcelle_service import ParcelleService
+from app.schemas.parcelle import ParcelleCreate, ParcelleUpdate, ParcelleResponse
+from app.core.dependencies import get_current_user
 
 router = APIRouter(
     prefix="/parcelles",
@@ -25,17 +25,17 @@ async def create_parcelle(
 ):
     """
     Créer une nouvelle parcelle dans un terrain.
-    
+
     - **nom**: Nom de la parcelle (obligatoire)
     - **terrain_id**: ID du terrain parent (obligatoire)
     - **superficie**: Superficie en hectares (obligatoire)
     - **type_sol**: Type de sol
     - **systeme_irrigation**: Système d'irrigation utilisé
-    
+
     La superficie totale des parcelles ne peut pas dépasser celle du terrain.
     Un code unique sera automatiquement généré si non fourni.
     """
-    return ParcelleService.create_parcelle(db, parcelle_data, current_user["id"])
+    return ParcelleService.create_parcelle(db, parcelle_data, str(current_user.id))
 
 
 @router.get(
@@ -54,7 +54,7 @@ async def get_parcelles_by_terrain(
     Récupérer toutes les parcelles d'un terrain spécifique.
     """
     return ParcelleService.get_parcelles_by_terrain(
-        db, terrain_id, current_user["id"], skip, limit
+        db, terrain_id, str(current_user.id), skip, limit
     )
 
 
@@ -72,7 +72,7 @@ async def get_parcelle_statistics(
     
     Retourne le nombre de parcelles et la superficie totale par statut.
     """
-    return ParcelleService.get_parcelle_statistics(db, terrain_id, current_user["id"])
+    return ParcelleService.get_parcelle_statistics(db, terrain_id, str(current_user.id))
 
 
 @router.get(
@@ -88,7 +88,7 @@ async def get_parcelle(
     """
     Récupérer les détails d'une parcelle spécifique.
     """
-    return ParcelleService.get_parcelle_by_id(db, parcelle_id, current_user["id"])
+    return ParcelleService.get_parcelle_by_id(db, parcelle_id, str(current_user.id))
 
 
 @router.put(
@@ -109,7 +109,7 @@ async def update_parcelle(
     Si la culture actuelle est modifiée, l'ancienne culture sera archivée.
     """
     return ParcelleService.update_parcelle(
-        db, parcelle_id, parcelle_data, current_user["id"]
+        db, parcelle_id, parcelle_data, str(current_user.id)
     )
 
 
@@ -128,7 +128,7 @@ async def delete_parcelle(
     
     La parcelle ne sera pas physiquement supprimée mais marquée comme supprimée.
     """
-    return ParcelleService.delete_parcelle(db, parcelle_id, current_user["id"])
+    return ParcelleService.delete_parcelle(db, parcelle_id, str(current_user.id))
 
 
 @router.get(
@@ -146,4 +146,4 @@ async def get_historique_cultures(
     Retourne toutes les cultures qui ont été plantées sur cette parcelle,
     avec les dates de plantation et de récolte, ainsi que les rendements.
     """
-    return ParcelleService.get_historique_cultures(db, parcelle_id, current_user["id"])
+    return ParcelleService.get_historique_cultures(db, parcelle_id, str(current_user.id))

@@ -1,221 +1,281 @@
-from fastapi import APIRouter, Depends, status, Query
 from sqlalchemy.orm import Session
+from sqlalchemy import func, or_
 from typing import List, Optional
-from database import get_db
-from services.localite_service import LocaliteService
-from schemas.location import LocaliteCreate, LocaliteUpdate, LocaliteResponse, Continent, ClimateZone
-
-# Import optionnel de l'authentification
-try:
-    from auth.dependencies import get_current_user
-except ImportError:
-    def get_current_user():
-        return {"id": "test-user-id", "email": "test@example.com"}
-
-router = APIRouter(
-    prefix="/localites",
-    tags=["Localités"]
-)
+from fastapi import HTTPException, status
+import uuid
+from app.models.location import Localite, Continent, ClimateZone
+from app.schemas.location import LocaliteCreate, LocaliteUpdate
 
 
-@router.post(
-    "/",
-    response_model=LocaliteResponse,
-    status_code=status.HTTP_201_CREATED,
-    summary="Créer une nouvelle localité"
-)
-async def create_localite(
-    localite_data: LocaliteCreate,
-    current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """
-    Créer une nouvelle localité avec ses coordonnées GPS et informations climatiques.
-    
-    **Coordonnées :**
-    - **latitude**: -90 à 90
-    - **longitude**: -180 à 180
-    - **altitude**: Altitude en mètres (optionnel)
-    
-    **Adresse :**
-    - **ville**: Nom de la ville (obligatoire)
-    - **pays**: Nom du pays (obligatoire)
-    - **continent**: Continent (obligatoire)
-    - **quartier**, **region**, **code_postal**: Optionnels
-    
-    **Informations supplémentaires :**
-    - **timezone**: Fuseau horaire (ex: "Africa/Douala")
-    - **superficie**: Superficie en km²
-    - **population**: Nombre d'habitants
-    - **climate_zone**: Zone climatique
-    """
-    return LocaliteService.create_localite(db, localite_data, current_user["id"])
+class LocaliteService:
+    """Service pour la gestion des localités"""
 
+    @staticmethod
+    def create_localite(db: Session, localite_data: LocaliteCreate, user_id: str) -> Localite:
+        """Créer une nouvelle localité"""
+        try:
+            # Vérifier si une localité avec les mêmes coordonnées existe déjà
+            existing = db.query(Localite).filter(
+                Localite.latitude == localite_data.coordinates.latitude,
+                Localite.longitude == localite_data.coordinates.longitude,
+                Localite.deleted_at.is_(None)
+            ).first()
 
-@router.get(
-    "/",
-    response_model=List[LocaliteResponse],
-    summary="Récupérer toutes les localités"
-)
-async def get_all_localites(
-    skip: int = Query(0, ge=0, description="Nombre d'éléments à ignorer"),
-    limit: int = Query(100, ge=1, le=1000, description="Nombre maximum d'éléments"),
-    continent: Optional[Continent] = Query(None, description="Filtrer par continent"),
-    climate_zone: Optional[ClimateZone] = Query(None, description="Filtrer par zone climatique"),
-    pays: Optional[str] = Query(None, description="Filtrer par pays"),
-    ville: Optional[str] = Query(None, description="Filtrer par ville"),
-    search: Optional[str] = Query(None, description="Recherche globale (nom, ville, pays, région)"),
-    db: Session = Depends(get_db)
-):
-    """
-    Récupérer toutes les localités avec possibilité de filtrage.
-    
-    **Filtres disponibles :**
-    - **continent**: Filtrer par continent
-    - **climate_zone**: Filtrer par zone climatique
-    - **pays**: Recherche partielle dans le nom du pays
-    - **ville**: Recherche partielle dans le nom de la ville
-    - **search**: Recherche globale dans nom, ville, pays et région
-    
-    **Pagination :**
-    - **skip**: Nombre d'éléments à ignorer
-    - **limit**: Nombre maximum d'éléments à retourner (max 1000)
-    """
-    return LocaliteService.get_all_localites(
-        db, skip, limit, continent, climate_zone, pays, ville, search
-    )
+            if existing:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Une localité existe déjà à ces coordonnées"
+                )
 
+            localite = Localite(
+                id=str(uuid.uuid4()),
+                nom=localite_data.nom,
+                latitude=localite_data.coordinates.latitude,
+                longitude=localite_data.coordinates.longitude,
+                altitude=localite_data.coordinates.altitude,
+                quartier=localite_data.address.quartier,
+                ville=localite_data.address.ville,
+                region=localite_data.address.region,
+                pays=localite_data.address.pays,
+                code_postal=localite_data.address.code_postal,
+                continent=localite_data.address.continent,
+                timezone=localite_data.timezone,
+                superficie=localite_data.superficie,
+                population=localite_data.population,
+                climate_zone=localite_data.climate_zone
+            )
 
-@router.get(
-    "/statistics",
-    summary="Statistiques des localités"
-)
-async def get_localite_statistics(
-    db: Session = Depends(get_db)
-):
-    """
-    Obtenir les statistiques globales des localités.
-    
-    Retourne :
-    - Nombre total de localités
-    - Répartition par continent
-    - Répartition par zone climatique
-    - Superficie totale couverte
-    - Population totale
-    """
-    return LocaliteService.get_localite_statistics(db)
+            db.add(localite)
+            db.commit()
+            db.refresh(localite)
+            return localite
 
+        except HTTPException:
+            raise
+        except Exception as e:
+            db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Erreur lors de la création de la localité: {str(e)}"
+            )
 
-@router.get(
-    "/countries",
-    summary="Liste des pays disponibles"
-)
-async def get_countries_list(
-    db: Session = Depends(get_db)
-):
-    """
-    Obtenir la liste de tous les pays avec le nombre de localités par pays.
-    
-    Utile pour remplir des listes déroulantes ou filtres.
-    """
-    return LocaliteService.get_countries_list(db)
+    @staticmethod
+    def get_localite_by_id(db: Session, localite_id: str) -> Localite:
+        """Récupérer une localité par son ID"""
+        localite = db.query(Localite).filter(
+            Localite.id == localite_id,
+            Localite.deleted_at.is_(None)
+        ).first()
 
+        if not localite:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Localité non trouvée"
+            )
 
-@router.get(
-    "/proximity",
-    response_model=List[LocaliteResponse],
-    summary="Localités à proximité"
-)
-async def get_localites_by_proximity(
-    latitude: float = Query(..., ge=-90, le=90, description="Latitude du point de référence"),
-    longitude: float = Query(..., ge=-180, le=180, description="Longitude du point de référence"),
-    radius_km: float = Query(50, ge=1, le=500, description="Rayon de recherche en km"),
-    db: Session = Depends(get_db)
-):
-    """
-    Trouver les localités dans un rayon donné autour d'un point GPS.
-    
-    Utilise la formule de Haversine pour calculer les distances précises.
-    Les résultats sont triés par distance croissante.
-    
-    **Paramètres :**
-    - **latitude**: Latitude du point central (-90 à 90)
-    - **longitude**: Longitude du point central (-180 à 180)
-    - **radius_km**: Rayon de recherche en kilomètres (1 à 500)
-    
-    **Exemple :**
-    Pour trouver les localités à 30km de Yaoundé (3.8667°N, 11.5167°E):
-    `/localites/proximity?latitude=3.8667&longitude=11.5167&radius_km=30`
-    """
-    return LocaliteService.get_localites_by_proximity(db, latitude, longitude, radius_km)
+        return localite
 
+    @staticmethod
+    def get_all_localites(
+        db: Session,
+        skip: int = 0,
+        limit: int = 100,
+        continent: Optional[Continent] = None,
+        climate_zone: Optional[ClimateZone] = None,
+        pays: Optional[str] = None,
+        ville: Optional[str] = None,
+        search: Optional[str] = None
+    ) -> List[Localite]:
+        """Récupérer toutes les localités avec filtres"""
+        query = db.query(Localite).filter(Localite.deleted_at.is_(None))
 
-@router.get(
-    "/country/{pays}",
-    response_model=List[LocaliteResponse],
-    summary="Localités par pays"
-)
-async def get_localites_by_country(
-    pays: str,
-    db: Session = Depends(get_db)
-):
-    """
-    Récupérer toutes les localités d'un pays spécifique.
-    
-    Les résultats sont triés par nom de ville.
-    """
-    return LocaliteService.get_localites_by_country(db, pays)
+        # Filtres
+        if continent:
+            query = query.filter(Localite.continent == continent)
 
+        if climate_zone:
+            query = query.filter(Localite.climate_zone == climate_zone)
 
-@router.get(
-    "/{localite_id}",
-    response_model=LocaliteResponse,
-    summary="Récupérer une localité par son ID"
-)
-async def get_localite(
-    localite_id: str,
-    db: Session = Depends(get_db)
-):
-    """
-    Récupérer les détails complets d'une localité spécifique.
-    """
-    return LocaliteService.get_localite_by_id(db, localite_id)
+        if pays:
+            query = query.filter(Localite.pays.ilike(f"%{pays}%"))
 
+        if ville:
+            query = query.filter(Localite.ville.ilike(f"%{ville}%"))
 
-@router.put(
-    "/{localite_id}",
-    response_model=LocaliteResponse,
-    summary="Mettre à jour une localité"
-)
-async def update_localite(
-    localite_id: str,
-    localite_data: LocaliteUpdate,
-    current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """
-    Mettre à jour les informations d'une localité.
-    
-    Seuls les champs fournis seront mis à jour.
-    Les coordonnées GPS ne peuvent pas être modifiées après création.
-    """
-    return LocaliteService.update_localite(db, localite_id, localite_data)
+        if search:
+            query = query.filter(
+                or_(
+                    Localite.nom.ilike(f"%{search}%"),
+                    Localite.ville.ilike(f"%{search}%"),
+                    Localite.pays.ilike(f"%{search}%"),
+                    Localite.region.ilike(f"%{search}%")
+                )
+            )
 
+        return query.offset(skip).limit(limit).all()
 
-@router.delete(
-    "/{localite_id}",
-    status_code=status.HTTP_200_OK,
-    summary="Supprimer une localité"
-)
-async def delete_localite(
-    localite_id: str,
-    current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """
-    Supprimer une localité (suppression logique).
-    
-    ⚠️ La suppression échouera si des terrains sont associés à cette localité.
-    Vous devez d'abord supprimer ou réassigner les terrains.
-    """
-    return LocaliteService.delete_localite(db, localite_id)
+    @staticmethod
+    def update_localite(
+        db: Session,
+        localite_id: str,
+        localite_data: LocaliteUpdate
+    ) -> Localite:
+        """Mettre à jour une localité"""
+        localite = LocaliteService.get_localite_by_id(db, localite_id)
+
+        update_data = localite_data.dict(exclude_unset=True)
+        for field, value in update_data.items():
+            setattr(localite, field, value)
+
+        try:
+            db.commit()
+            db.refresh(localite)
+            return localite
+        except Exception as e:
+            db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Erreur lors de la mise à jour: {str(e)}"
+            )
+
+    @staticmethod
+    def delete_localite(db: Session, localite_id: str) -> dict:
+        """Supprimer une localité (soft delete)"""
+        localite = LocaliteService.get_localite_by_id(db, localite_id)
+
+        # Vérifier qu'aucun terrain n'est associé
+        if localite.terrains:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Impossible de supprimer: {len(localite.terrains)} terrain(s) associé(s)"
+            )
+
+        try:
+            localite.soft_delete()
+            db.commit()
+            return {"message": "Localité supprimée avec succès"}
+        except Exception as e:
+            db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Erreur lors de la suppression: {str(e)}"
+            )
+
+    @staticmethod
+    def get_localites_by_proximity(
+        db: Session,
+        latitude: float,
+        longitude: float,
+        radius_km: float = 50
+    ) -> List[Localite]:
+        """
+        Récupérer les localités dans un rayon donné
+        Utilise la formule de Haversine pour calculer la distance
+        """
+        # Conversion du rayon en degrés approximatifs (1 degré ≈ 111 km)
+        radius_deg = radius_km / 111.0
+
+        localites = db.query(Localite).filter(
+            Localite.deleted_at.is_(None),
+            Localite.latitude.between(latitude - radius_deg, latitude + radius_deg),
+            Localite.longitude.between(longitude - radius_deg, longitude + radius_deg)
+        ).all()
+
+        # Filtrer avec calcul précis de distance (formule de Haversine)
+        import math
+
+        def haversine_distance(lat1, lon1, lat2, lon2):
+            R = 6371  # Rayon de la Terre en km
+            dlat = math.radians(lat2 - lat1)
+            dlon = math.radians(lon2 - lon1)
+            a = (math.sin(dlat / 2) ** 2 +
+                 math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) *
+                 math.sin(dlon / 2) ** 2)
+            c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+            return R * c
+
+        result = []
+        for loc in localites:
+            distance = haversine_distance(latitude, longitude, loc.latitude, loc.longitude)
+            if distance <= radius_km:
+                # Ajouter la distance comme attribut temporaire
+                loc.distance_km = round(distance, 2)
+                result.append(loc)
+
+        # Trier par distance
+        result.sort(key=lambda x: x.distance_km)
+        return result
+
+    @staticmethod
+    def get_localite_statistics(db: Session) -> dict:
+        """Obtenir les statistiques des localités"""
+        stats = {
+            "total": db.query(func.count(Localite.id)).filter(
+                Localite.deleted_at.is_(None)
+            ).scalar(),
+            "by_continent": {},
+            "by_climate_zone": {},
+            "superficie_totale": 0,
+            "population_totale": 0
+        }
+
+        # Statistiques par continent
+        continent_stats = db.query(
+            Localite.continent,
+            func.count(Localite.id).label('count')
+        ).filter(
+            Localite.deleted_at.is_(None)
+        ).group_by(Localite.continent).all()
+
+        for continent, count in continent_stats:
+            stats["by_continent"][continent.value if continent else "Non défini"] = count
+
+        # Statistiques par zone climatique
+        climate_stats = db.query(
+            Localite.climate_zone,
+            func.count(Localite.id).label('count')
+        ).filter(
+            Localite.deleted_at.is_(None)
+        ).group_by(Localite.climate_zone).all()
+
+        for climate, count in climate_stats:
+            stats["by_climate_zone"][climate.value if climate else "Non défini"] = count
+
+        # Superficie et population totales
+        totals = db.query(
+            func.sum(Localite.superficie).label('superficie'),
+            func.sum(Localite.population).label('population')
+        ).filter(Localite.deleted_at.is_(None)).first()
+
+        stats["superficie_totale"] = float(totals.superficie or 0)
+        stats["population_totale"] = int(totals.population or 0)
+
+        return stats
+
+    @staticmethod
+    def get_localites_by_country(db: Session, pays: str) -> List[Localite]:
+        """Récupérer toutes les localités d'un pays"""
+        return db.query(Localite).filter(
+            Localite.pays.ilike(f"%{pays}%"),
+            Localite.deleted_at.is_(None)
+        ).order_by(Localite.ville).all()
+
+    @staticmethod
+    def get_countries_list(db: Session) -> List[dict]:
+        """Obtenir la liste des pays disponibles"""
+        countries = db.query(
+            Localite.pays,
+            Localite.continent,
+            func.count(Localite.id).label('count')
+        ).filter(
+            Localite.deleted_at.is_(None)
+        ).group_by(Localite.pays, Localite.continent).all()
+
+        return [
+            {
+                "pays": country.pays,
+                "continent": country.continent.value if country.continent else None,
+                "nombre_localites": country.count
+            }
+            for country in countries
+        ]

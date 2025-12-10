@@ -1,8 +1,8 @@
 from typing import List, Optional, Dict, Any
 from datetime import datetime
+from sqlalchemy.orm import Session
 from app.models.alert import Alert, TypeAlerte, SeveriteAlerte
 from app.models.user import User
-from sqlalchemy.orm import Session
 
 
 class NotificationService:
@@ -52,7 +52,7 @@ class NotificationService:
         alert_id: str
     ) -> Alert:
         """Marquer une alerte comme lue"""
-        alerte = db.query(Alerte).filter(Alert.id == alert_id).first()
+        alerte = db.query(Alert).filter(Alert.id == alert_id).first()
         
         if alerte:
             alerte.est_lue = True
@@ -67,7 +67,7 @@ class NotificationService:
         alert_id: str
     ) -> Alert:
         """Résoudre une alerte"""
-        alerte = db.query(Alerte).filter(Alerte.id == alert_id).first()
+        alerte = db.query(Alert).filter(Alert.id == alert_id).first()
         
         if alerte:
             alerte.est_resolue = True

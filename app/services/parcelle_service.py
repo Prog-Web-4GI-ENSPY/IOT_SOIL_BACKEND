@@ -2,8 +2,8 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from typing import List, Optional
 from fastapi import HTTPException, status
-from models.parcelle import Parcelle, StatutParcelle, HistoriqueCulture
-from schemas.parcelle import ParcelleCreate, ParcelleUpdate
+from app.models.parcelle import Parcelle, StatutParcelle, HistoriqueCulture
+from app.schemas.parcelle import ParcelleCreate, ParcelleUpdate
 import uuid
 from datetime import datetime
 
@@ -28,7 +28,7 @@ class ParcelleService:
     ) -> Parcelle:
         """Créer une nouvelle parcelle"""
         # Vérifier que le terrain appartient à l'utilisateur
-        from models.terrain import Terrain
+        from app.models.terrain import Terrain
         terrain = db.query(Terrain).filter(
             Terrain.id == parcelle_data.terrain_id,
             Terrain.user_id == user_id,
@@ -82,8 +82,8 @@ class ParcelleService:
     @staticmethod
     def get_parcelle_by_id(db: Session, parcelle_id: str, user_id: str) -> Parcelle:
         """Récupérer une parcelle par son ID"""
-        from models.terrain import Terrain
-        
+        from app.models.terrain import Terrain
+
         parcelle = db.query(Parcelle).join(Terrain).filter(
             Parcelle.id == parcelle_id,
             Terrain.user_id == user_id,
@@ -107,8 +107,8 @@ class ParcelleService:
         limit: int = 100
     ) -> List[Parcelle]:
         """Récupérer toutes les parcelles d'un terrain"""
-        from models.terrain import Terrain
-        
+        from app.models.terrain import Terrain
+
         # Vérifier que le terrain appartient à l'utilisateur
         terrain = db.query(Terrain).filter(
             Terrain.id == terrain_id,
@@ -208,8 +208,8 @@ class ParcelleService:
     @staticmethod
     def get_parcelle_statistics(db: Session, terrain_id: str, user_id: str) -> dict:
         """Obtenir les statistiques des parcelles d'un terrain"""
-        from models.terrain import Terrain
-        
+        from app.models.terrain import Terrain
+
         terrain = db.query(Terrain).filter(
             Terrain.id == terrain_id,
             Terrain.user_id == user_id,

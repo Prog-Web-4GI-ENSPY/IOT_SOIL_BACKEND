@@ -38,7 +38,11 @@ class Settings(BaseSettings):
     CHIRPSTACK_API_URL: AnyUrl
     CHIRPSTACK_API_TOKEN: str
     CHIRPSTACK_APPLICATION_ID: str
-    
+
+    # --- Machine Learning Service ---
+    ML_API_URL: str = Field(default="http://localhost:5000")
+    ML_API_TIMEOUT: int = Field(default=60)
+
     # --- CORS ---
     # Utilisez 'List' ou 'list' (avec Pydantic v2) pour les listes
     BACKEND_CORS_ORIGINS: List[str] = Field(default=["http://localhost:3000"])

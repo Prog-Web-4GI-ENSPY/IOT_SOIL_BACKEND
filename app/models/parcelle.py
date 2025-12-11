@@ -52,7 +52,7 @@ class Parcelle(BaseModel):
     
     # Statut et culture
     statut = Column(SQLEnum(StatutParcelle), default=StatutParcelle.ACTIVE, nullable=False)
-    culture_actuelle_id = Column(String(36), ForeignKey("cultures.id"), index=True)
+    culture_actuelle = Column(String(100))  # Nom de la culture en texte simple
     date_plantation = Column(DateTime)
     date_recolte_estimee = Column(DateTime)
     
@@ -65,17 +65,15 @@ class Parcelle(BaseModel):
     # Relations
     terrain = relationship("Terrain", back_populates="parcelles")
     recommandations = relationship("Recommendation", back_populates="parcelle")
-    culture_actuelle = relationship("Culture")
     capteurs = relationship("Capteur", back_populates="parcelle", cascade="all, delete-orphan")
     historique_cultures = relationship("HistoriqueCulture", back_populates="parcelle", cascade="all, delete-orphan")
-    alertes = relationship("Alert", back_populates="parcelle", cascade="all, delete-orphan")
 
 
 class HistoriqueCulture(BaseModel):
     __tablename__ = "historique_cultures"
 
     parcelle_id = Column(String(36), ForeignKey("parcelles.id"), nullable=False, index=True)
-    culture_id = Column(String(36), ForeignKey("cultures.id"), nullable=False, index=True)
+    culture_nom = Column(String(100), nullable=False)  # Nom de la culture en texte simple
     date_plantation = Column(DateTime, nullable=False)
     date_recolte = Column(DateTime)
     rendement = Column(Float)  # tonnes/ha
@@ -84,4 +82,3 @@ class HistoriqueCulture(BaseModel):
 
     # Relations
     parcelle = relationship("Parcelle", back_populates="historique_cultures")
-    culture = relationship("Culture")

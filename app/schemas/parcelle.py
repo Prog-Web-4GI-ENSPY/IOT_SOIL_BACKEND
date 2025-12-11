@@ -59,7 +59,7 @@ class ParcelleUpdate(BaseModel):
     statut: Optional[StatutParcelle] = None
     superficie: Optional[float] = Field(None, gt=0)
     systeme_irrigation: Optional[SystemeIrrigation] = None
-    culture_actuelle_id: Optional[str] = None
+    culture_actuelle: Optional[str] = Field(None, max_length=100)  # Nom de la culture en texte
     date_plantation: Optional[datetime] = None
 
 
@@ -72,7 +72,7 @@ class ParcelleResponse(BaseModel):
     superficie: float
     type_sol: TypeSol
     statut: StatutParcelle
-    culture_actuelle_id: Optional[str]
+    culture_actuelle: Optional[str]  # Nom de la culture en texte
     date_plantation: Optional[datetime]
     date_recolte_estimee: Optional[datetime]
     systeme_irrigation: Optional[SystemeIrrigation]

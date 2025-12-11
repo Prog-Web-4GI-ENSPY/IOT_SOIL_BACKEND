@@ -5,79 +5,18 @@ from app.api.v1 import (
     terrain_router,
     recommendation_router,
     location_router,
-    alert_router,
     sensor_data_router,
-    prediction_router,
-    culture_router,
-    webhook_router
+    expert_system_router,
+    chirpstack_router
 )
 from app.routers import auth_router, users_router
 
 # Définissez le routeur principal qui sera importé dans main.py
 api_router = APIRouter()
 
-# CRUD Capteurs endpoints
-api_router.include_router(
-    capteur_route.router,
-    prefix="/capteurs",
-    tags=["Capteurs"]
-)
-
-# Parcelles endpoints
-api_router.include_router(
-    parcelle_router.router,
-    prefix="/parcelles",
-    tags=["Parcelles"]
-)
-
-# Terrains endpoints
-api_router.include_router(
-    terrain_router.router,
-    prefix="/terrains",
-    tags=["Terrains"]
-)
-
-# Recommendations endpoints
-api_router.include_router(
-    recommendation_router.router,
-    prefix="/recommendations",
-    tags=["Recommandations"]
-)
-
-# Localités endpoints
-api_router.include_router(
-    location_router.router,
-    prefix="/localites",
-    tags=["Localités"]
-)
-
-# Alertes endpoints
-api_router.include_router(
-    alert_router.router,
-    prefix="/alerts",
-    tags=["Alertes"]
-)
-
-# Sensor Data endpoints
-api_router.include_router(
-    sensor_data_router.router,
-    prefix="/sensor-data",
-    tags=["Données de Capteurs"]
-)
-
-# Predictions endpoints
-api_router.include_router(
-    prediction_router.router,
-    prefix="/predictions",
-    tags=["Prédictions"]
-)
-
-# Cultures endpoints
-api_router.include_router(
-    culture_router.router,
-    prefix="/cultures",
-    tags=["Cultures"]
-)
+# ============================================================================
+# GESTION DES UTILISATEURS ET AUTHENTIFICATION
+# ============================================================================
 
 # Authentication endpoints
 api_router.include_router(
@@ -93,9 +32,74 @@ api_router.include_router(
     tags=["Users"]
 )
 
-# Webhooks & Integration endpoints
+# ============================================================================
+# GESTION DES ENTITÉS AGRICOLES
+# ============================================================================
+
+# Localités endpoints
 api_router.include_router(
-    webhook_router.router,
-    prefix="/webhooks",
-    tags=["Webhooks & Intégration"]
+    location_router.router,
+    prefix="/localites",
+    tags=["Localités"]
+)
+
+# Terrains endpoints
+api_router.include_router(
+    terrain_router.router,
+    prefix="/terrains",
+    tags=["Terrains"]
+)
+
+# Parcelles endpoints
+api_router.include_router(
+    parcelle_router.router,
+    prefix="/parcelles",
+    tags=["Parcelles"]
+)
+
+# ============================================================================
+# GESTION DES CAPTEURS ET DONNÉES
+# ============================================================================
+
+# CRUD Capteurs endpoints
+api_router.include_router(
+    capteur_route.router,
+    prefix="/capteurs",
+    tags=["Capteurs"]
+)
+
+# Sensor Data endpoints
+api_router.include_router(
+    sensor_data_router.router,
+    prefix="/sensor-data",
+    tags=["Données de Capteurs"]
+)
+
+# ============================================================================
+# INTÉGRATION CHIRPSTACK
+# ============================================================================
+
+# ChirpStack webhooks et communication
+api_router.include_router(
+    chirpstack_router.router,
+    prefix="/chirpstack",
+    tags=["ChirpStack"]
+)
+
+# ============================================================================
+# SYSTÈME EXPERT ET RECOMMANDATIONS
+# ============================================================================
+
+# Système Expert (envoi/réception)
+api_router.include_router(
+    expert_system_router.router,
+    prefix="/expert-system",
+    tags=["Système Expert"]
+)
+
+# Recommendations endpoints
+api_router.include_router(
+    recommendation_router.router,
+    prefix="/recommendations",
+    tags=["Recommandations"]
 )

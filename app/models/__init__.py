@@ -3,11 +3,8 @@ from .location import Localite
 from .terrain import Terrain
 from .parcelle import Parcelle, HistoriqueCulture
 from .capteur import Capteur
-from .sensor_data import  SensorMeasurements
-from .prediction import Prediction
+from .sensor_data import SensorMeasurements
 from .recommendation import Recommendation
-from .alert import Alert
-from .culture import Culture
 from .base import Base, BaseModel
 
 __all__ = [
@@ -17,11 +14,8 @@ __all__ = [
     "Localite",
     "Terrain",
     "Parcelle",
-    "Culture",
     "HistoriqueCulture",
     "Capteur",
     "SensorMeasurements",
-    "Prediction",
     "Recommendation",
-    "Alert",
 ]

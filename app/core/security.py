@@ -11,14 +11,18 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Vérifie si le mot de passe correspond au hash"""
     # Tronquer le mot de passe à 72 bytes pour bcrypt
     password_bytes = plain_password.encode('utf-8')[:72]
-    return pwd_context.verify(password_bytes, hashed_password)
+    # Redécoder en string pour passlib
+    truncated_password = password_bytes.decode('utf-8', errors='ignore')
+    return pwd_context.verify(truncated_password, hashed_password)
 
 
 def get_password_hash(password: str) -> str:
     """Hash un mot de passe"""
     # Tronquer le mot de passe à 72 bytes pour bcrypt
     password_bytes = password.encode('utf-8')[:72]
-    return pwd_context.hash(password_bytes)
+    # Redécoder en string pour passlib
+    truncated_password = password_bytes.decode('utf-8', errors='ignore')
+    return pwd_context.hash(truncated_password)
 
 
 def create_access_token(data: Dict[str, Any], expires_delta: Optional[timedelta] = None) -> str:

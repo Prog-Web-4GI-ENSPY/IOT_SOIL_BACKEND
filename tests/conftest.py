@@ -52,14 +52,14 @@ def client(db) -> Generator:
 @pytest.fixture
 def test_user(db) -> User:
     """Créer un utilisateur de test"""
-    from app.services.auth import auth_service
-    
+    from app.services.auth_service import auth_service
+
     user = User(
         nom="Test",
         prenom="User",
         email="test@example.com",
         telephone="+237612345678",
-        password_hash=auth_service.get_password_hash("Test1234!"),
+        password_hash=auth_service.get_password_hash("TestPassword123"),
         role=UserRole.USER,
         status=UserStatus.ACTIVE
     )
@@ -72,14 +72,14 @@ def test_user(db) -> User:
 @pytest.fixture
 def test_admin(db) -> User:
     """Créer un admin de test"""
-    from app.services.auth import auth_service
-    
+    from app.services.auth_service import auth_service
+
     admin = User(
         nom="Admin",
         prenom="User",
         email="admin@example.com",
         telephone="+237612345679",
-        password_hash=auth_service.get_password_hash("Admin1234!"),
+        password_hash=auth_service.get_password_hash("AdminPassword123"),
         role=UserRole.ADMIN,
         status=UserStatus.ACTIVE
     )
@@ -90,10 +90,31 @@ def test_admin(db) -> User:
 
 
 @pytest.fixture
+def test_inactive_user(db) -> User:
+    """Créer un utilisateur inactif de test"""
+    from app.services.auth_service import auth_service
+
+    user = User(
+        nom="Inactive",
+        prenom="User",
+        email="inactive@example.com",
+        telephone="+237612345680",
+        password_hash=auth_service.get_password_hash("InactivePassword123"),
+        role=UserRole.USER,
+        status=UserStatus.INACTIVE
+    )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+@pytest.fixture
 def auth_headers(test_user) -> dict:
     """Headers d'authentification pour les tests"""
+    from app.core.security import create_access_token
     access_token = create_access_token(
-        data={"sub": test_user.email, "user_id": test_user.id}
+        data={"sub": test_user.id, "email": test_user.email}
     )
     return {"Authorization": f"Bearer {access_token}"}
 
@@ -101,7 +122,17 @@ def auth_headers(test_user) -> dict:
 @pytest.fixture
 def admin_headers(test_admin) -> dict:
     """Headers admin pour les tests"""
+    from app.core.security import create_access_token
     access_token = create_access_token(
-        data={"sub": test_admin.email, "user_id": test_admin.id}
+        data={"sub": test_admin.id, "email": test_admin.email}
     )
     return {"Authorization": f"Bearer {access_token}"}
+
+
+@pytest.fixture
+def user_token(test_user) -> str:
+    """Token d'accès pour l'utilisateur de test"""
+    from app.core.security import create_access_token
+    return create_access_token(
+        data={"sub": test_user.id, "email": test_user.email}
+    )

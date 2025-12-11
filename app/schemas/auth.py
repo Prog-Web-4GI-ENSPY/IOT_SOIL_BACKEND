@@ -46,6 +46,11 @@ class PasswordResetConfirm(BaseModel):
     new_password: str = Field(..., min_length=8, max_length=100)
 
 
+class TokenValidationRequest(BaseModel):
+    """Schéma pour la requête de validation du token"""
+    token: str
+
+
 class TokenValidationResponse(BaseModel):
     """Schéma pour la réponse de validation du token"""
     valid: bool

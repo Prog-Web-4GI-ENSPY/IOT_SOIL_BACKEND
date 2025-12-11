@@ -7,6 +7,7 @@ from app.schemas.auth import (
     TokenResponse,
     RefreshTokenRequest,
     PasswordChangeRequest,
+    TokenValidationRequest,
     TokenValidationResponse
 )
 from app.schemas.user import UserCreate, UserResponse
@@ -256,20 +257,20 @@ def verify_token_endpoint(
 
 @router.post("/validate-token", response_model=TokenValidationResponse)
 def validate_token(
-    token: str,
+    request: TokenValidationRequest,
     db: Session = Depends(get_db)
 ):
     """
     Valide un token sans utiliser les headers d'authentification
 
     Args:
-        token: Le token à valider
+        request: La requête contenant le token à valider
         db: Session de base de données
 
     Returns:
         TokenValidationResponse: Informations sur la validité du token
     """
-    payload = verify_token(token, token_type="access")
+    payload = verify_token(request.token, token_type="access")
 
     if payload is None:
         return TokenValidationResponse(

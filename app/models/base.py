@@ -18,5 +18,5 @@ class BaseModel(Base):
     # CLÉ PRIMAIRE DÉFINIE COMME STRING DE 36 CARACTÈRES (UUID)
     id = Column(String(36), primary_key=True, index=True, default=generate_uuid_as_string)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    deleted_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    deleted_at = Column(DateTime, nullable=True, default=None)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)

@@ -31,7 +31,7 @@ class Settings(BaseSettings):
     # --- Security ---
     SECRET_KEY: str
     ALGORITHM: str = Field(default="HS256")
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(default=30)
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(default=1440)
     REFRESH_TOKEN_EXPIRE_DAYS: int = Field(default=7)
     
     # --- ChirpStack ---

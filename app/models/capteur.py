@@ -17,6 +17,7 @@ class Capteur(BaseModel):
     __tablename__ = "capteurs"
 
     nom = Column(String(200), nullable=False, index=True)
+    code = Column(String(200), nullable=False, index=True)
 
     # Configuration LoRaWAN
     dev_eui = Column(String(16), unique=True, nullable=False, index=True)  # 16 caractères hex
@@ -25,13 +26,13 @@ class Capteur(BaseModel):
     parcelle_id = Column(String(36), ForeignKey("parcelles.id"), nullable=False, index=True)
 
     # Colonne Enum utilisant la classe StatutCapteur
-    """
+
     statut = Column(
         Enum(StatutCapteur, values_callable=lambda x: [e.value for e in x]),
         default=StatutCapteur.INACTIF,
         nullable=False
     )
-    """
+    
     # Métadonnées
     date_installation = Column(DateTime, nullable=False)
     date_activation = Column(DateTime)

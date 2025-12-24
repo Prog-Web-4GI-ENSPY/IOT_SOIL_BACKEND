@@ -11,6 +11,7 @@ class TypeSol(str, Enum):
     HUMIFERE = "humifère"
     CALCAIRE = "calcaire"
     TOURBEUX = "tourbeux"
+    NON_SPECIFIE="Non spécifié"
 
 
 class StatutParcelle(str, Enum):
@@ -44,6 +45,7 @@ class ParcelleBase(BaseModel):
     code: Optional[str] = Field(None, max_length=50)
     description: Optional[str] = Field(None, max_length=1000)
     terrain_id: str
+    type_sol:TypeSol
     superficie: float = Field(..., gt=0)
     systeme_irrigation: Optional[SystemeIrrigation] = None
     source_eau: Optional[str] = Field(None, max_length=200)

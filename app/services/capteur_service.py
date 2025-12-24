@@ -7,7 +7,7 @@ from datetime import datetime
 from app.models.capteur import Capteur, StatutCapteur
 from app.models.parcelle import Parcelle
 from app.schemas.capteur import CapteurCreate, CapteurUpdate
-
+import uuid
 
 class CapteurService:
     
@@ -64,24 +64,24 @@ class CapteurService:
         
         return query.offset(skip).limit(limit).all()
     
-    def create_capteur(
-        self,
-        db: Session,
-        capteur_data: CapteurCreate
-    ) -> Capteur:
+    def create_capteur(self, db: Session, capteur_data: CapteurCreate) -> Capteur:
         """Créer un nouveau capteur"""
-        # Vérifier que la parcelle existe
+        # 1. Conversion forcée en String pour la comparaison avec la DB
+        # Cela évite l'erreur "operator does not exist: character varying = uuid"
+        target_parcelle_id = str(capteur_data.parcelle_id)
+
+        # 2. Vérifier que la parcelle existe avec l'ID casté en string
         parcelle = db.query(Parcelle).filter(
-            Parcelle.id == capteur_data.parcelle_id
+            Parcelle.id == target_parcelle_id
         ).first()
         
         if not parcelle:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Parcelle non trouvée"
+                detail=f"Parcelle {target_parcelle_id} non trouvée"
             )
         
-        # Vérifier l'unicité du DevEUI
+        # 3. Vérifier l'unicité du DevEUI
         existing_dev_eui = db.query(Capteur).filter(
             Capteur.dev_eui == capteur_data.dev_eui
         ).first()
@@ -92,7 +92,7 @@ class CapteurService:
                 detail="Ce DevEUI est déjà utilisé"
             )
         
-        # Vérifier l'unicité du code
+        # 4. Vérifier l'unicité du code
         if capteur_data.code:
             existing_code = db.query(Capteur).filter(
                 Capteur.code == capteur_data.code
@@ -104,10 +104,13 @@ class CapteurService:
                     detail="Ce code est déjà utilisé"
                 )
         
-        # Créer le capteur
+        # 5. Créer l'objet en s'assurant que parcelle_id est bien une string
+        capteur_dict = capteur_data.dict()
+        capteur_dict['parcelle_id'] = str(capteur_dict['parcelle_id'])
+        
         db_capteur = Capteur(
-            **capteur_data.dict(),
-            statut=StatutCapteur.OFFLINE
+            **capteur_dict,
+            statut=StatutCapteur.INACTIF
         )
         
         db.add(db_capteur)
@@ -239,8 +242,8 @@ class CapteurService:
             )
         
         total = query.count()
-        online = query.filter(Capteur.statut == StatutCapteur.ONLINE).count()
-        offline = query.filter(Capteur.statut == StatutCapteur.OFFLINE).count()
+        online = query.filter(Capteur.statut == StatutCapteur.ACTIF).count()
+        offline = query.filter(Capteur.statut == StatutCapteur.INACTIF).count()
         maintenance = query.filter(
             Capteur.statut == StatutCapteur.MAINTENANCE
         ).count()

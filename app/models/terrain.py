@@ -30,7 +30,18 @@ class Terrain(BaseModel):
     # Localisation
     localite_id = Column(String(36), ForeignKey("localites.id"), nullable=False, index=True)
 
+    @property
+    def latitude(self):
+        return self.localite.latitude if self.localite else None
 
+    @property
+    def longitude(self):
+        return self.localite.longitude if self.localite else None
+
+    @property
+    def nombre_parcelles(self):
+        return len(self.parcelles)
+        
     # Caractéristiques
     superficie_totale = Column(Float, nullable=False)  # hectares
     perimetre = Column(Float)  # mètres

@@ -40,7 +40,6 @@ async def create_localite(
     **Informations supplémentaires :**
     - **timezone**: Fuseau horaire (ex: "Africa/Douala")
     - **superficie**: Superficie en km²
-    - **population**: Nombre d'habitants
     - **climate_zone**: Zone climatique
     """
     return LocaliteService.create_localite(db, localite_data, str(current_user.id))
@@ -95,7 +94,6 @@ async def get_localite_statistics(
     - Répartition par continent
     - Répartition par zone climatique
     - Superficie totale couverte
-    - Population totale
     """
     return LocaliteService.get_localite_statistics(db)
 

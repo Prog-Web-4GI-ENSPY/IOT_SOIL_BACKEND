@@ -63,6 +63,7 @@ class ParcelleService:
                 description=parcelle_data.description,
                 terrain_id=parcelle_data.terrain_id,
                 superficie=parcelle_data.superficie,
+                type_sol=parcelle_data.type_sol or "Non spécifié",
                 systeme_irrigation=parcelle_data.systeme_irrigation,
                 source_eau=parcelle_data.source_eau
             )

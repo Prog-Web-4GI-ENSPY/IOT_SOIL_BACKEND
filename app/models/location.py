@@ -32,6 +32,10 @@ class Localite(BaseModel):
     # Coordonnées GPS
     latitude = Column(Float)
     longitude = Column(Float)
+    altitude = Column(Float)
+    population= Column(Float)
+
+
     
     # Adresse
     quartier = Column(String(200))
@@ -41,6 +45,7 @@ class Localite(BaseModel):
     code_postal = Column(String(20))
     continent = Column(SQLEnum(Continent), nullable=False)
     
+    climate_zone=Column(SQLEnum(ClimateZone))
     # Informations supplémentaires
     timezone = Column(String(50))
     superficie = Column(Float, nullable=False)  # km²

@@ -13,7 +13,7 @@ class SensorMeasurementsBase(BaseModel):
     capteur_id: str
     timestamp: Optional[datetime] = None
     measurements: dict
-    parcelle_id: int
+    parcelle_id: str
     
 
 
@@ -32,7 +32,7 @@ class SensorMeasurementsUpdate(SensorMeasurementsBase):
         return v
 
 class SensorMeasurementsResponse(BaseModel):
-    id: int
+    id: str
     ph: Optional[float]
     azote: Optional[float]
     phosphore: Optional[float]
@@ -42,7 +42,7 @@ class SensorMeasurementsResponse(BaseModel):
     capteur_id: str
     timestamp: datetime
     measurements: dict
-    parcelle_id: int
+    parcelle_id: str
     created_at: datetime
     updated_at: datetime
 

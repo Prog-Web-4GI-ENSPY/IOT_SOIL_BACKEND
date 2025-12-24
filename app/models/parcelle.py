@@ -47,7 +47,7 @@ class Parcelle(BaseModel):
 
     
     # Caractéristiques du sol (JSON pour flexibilité)
-    type_sol = Column(SQLEnum(TypeSol), nullable=False)
+    type_sol = Column(SQLEnum(TypeSol), nullable=True)
 
     
     # Statut et culture

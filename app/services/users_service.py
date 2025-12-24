@@ -110,17 +110,24 @@ class UserService:
                 detail="User not found"
             )
 
+        # 1. On extrait les données envoyées (déjà converties en dict récursivement)
         update_data = user_data.dict(exclude_unset=True)
 
-        if "preferences" in update_data and update_data["preferences"]:
-            update_data["preferences"] = update_data["preferences"].dict()
+      
 
         for field, value in update_data.items():
             setattr(db_user, field, value)
 
-        db.commit()
-        db.refresh(db_user)
-        return db_user
+        try:
+            db.commit()
+            db.refresh(db_user)
+            return db_user
+        except Exception as e:
+            db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Update failed: {str(e)}"
+            )
 
     @staticmethod
     def delete_user(db: Session, user_id: str) -> bool:

@@ -23,7 +23,7 @@ class Capteur(BaseModel):
     dev_eui = Column(String(16), unique=True, nullable=False, index=True)  # 16 caractères hex
 
     # Localisation
-    parcelle_id = Column(String(36), ForeignKey("parcelles.id"), nullable=False, index=True)
+    parcelle_id = Column(String(36), ForeignKey("parcelles.id"), nullable=True, index=True)
 
     # Colonne Enum utilisant la classe StatutCapteur
 

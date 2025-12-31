@@ -9,41 +9,20 @@ from app.schemas.recommendation import (
     RecommendationResponse
 )
 from app.core.dependencies import get_current_user
+from app.services.ml_service import MLService
+from app.services.expert_system_service import ExpertSystemService
+from app.schemas.ai_integration import UnifiedRecommendationRequest, UnifiedRecommendationResponse
+from datetime import datetime
 
 router = APIRouter(
-    prefix="/recommendations",
     tags=["Recommandations"]
 )
-
-
-@router.post(
-    "/",
-    response_model=RecommendationResponse,
-    status_code=status.HTTP_201_CREATED,
-    summary="Créer une nouvelle recommandation"
-)
-async def create_recommendation(
-    recommendation_data: RecommendationCreate,
-    current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """
-    Créer une nouvelle recommandation agricole pour une parcelle.
-    
-    - **titre**: Titre de la recommandation (5-200 caractères)
-    - **description**: Description détaillée (minimum 10 caractères)
-    - **parcelle_id**: ID de la parcelle concernée
-    - **priorite**: Niveau de priorité (Urgent, Normal, Faible)
-    """
-    return RecommendationService.create_recommendation(
-        db, recommendation_data, str(current_user.id)
-    )
 
 
 @router.get(
     "/",
     response_model=List[RecommendationResponse],
-    summary="Récupérer toutes les recommandations"
+    summary="Récupérer l'historique des recommandations"
 )
 async def get_all_recommendations(
     skip: int = Query(0, ge=0, description="Nombre d'éléments à ignorer"),
@@ -53,10 +32,7 @@ async def get_all_recommendations(
     db: Session = Depends(get_db)
 ):
     """
-    Récupérer toutes les recommandations de l'utilisateur connecté.
-    
-    Possibilité de filtrer par priorité et paginer les résultats.
-    Les recommandations sont triées par date d'émission décroissante.
+    Récupérer l'historique de toutes les recommandations de l'utilisateur connecté.
     """
     return RecommendationService.get_all_recommendations(
         db, str(current_user.id), skip, limit, priorite
@@ -66,7 +42,7 @@ async def get_all_recommendations(
 @router.get(
     "/parcelle/{parcelle_id}",
     response_model=List[RecommendationResponse],
-    summary="Récupérer les recommandations d'une parcelle"
+    summary="Récupérer l'historique par parcelle"
 )
 async def get_recommendations_by_parcelle(
     parcelle_id: str,
@@ -77,9 +53,7 @@ async def get_recommendations_by_parcelle(
     db: Session = Depends(get_db)
 ):
     """
-    Récupérer toutes les recommandations d'une parcelle spécifique.
-    
-    Les recommandations sont triées par date d'émission décroissante.
+    Récupérer l'historique des recommandations d'une parcelle spécifique.
     """
     return RecommendationService.get_recommendations_by_parcelle(
         db, parcelle_id, str(current_user.id), skip, limit, priorite
@@ -89,7 +63,7 @@ async def get_recommendations_by_parcelle(
 @router.get(
     "/{recommendation_id}",
     response_model=RecommendationResponse,
-    summary="Récupérer une recommandation par son ID"
+    summary="Détails d'une recommandation"
 )
 async def get_recommendation(
     recommendation_id: str,
@@ -97,94 +71,73 @@ async def get_recommendation(
     db: Session = Depends(get_db)
 ):
     """
-    Récupérer les détails d'une recommandation spécifique.
+    Récupérer les détails d'une recommandation archivée.
     """
     return RecommendationService.get_recommendation_by_id(
         db, recommendation_id, str(current_user.id)
     )
 
 
-@router.put(
-    "/{recommendation_id}",
-    response_model=RecommendationResponse,
-    summary="Mettre à jour une recommandation"
-)
-async def update_recommendation(
-    recommendation_id: str,
-    recommendation_data: RecommendationUpdate,
-    current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """
-    Mettre à jour les informations d'une recommandation.
-    
-    Seuls les champs fournis seront mis à jour.
-    """
-    return RecommendationService.update_recommendation(
-        db, recommendation_id, recommendation_data, str(current_user.id)
-    )
-
-
-@router.delete(
-    "/{recommendation_id}",
-    status_code=status.HTTP_200_OK,
-    summary="Supprimer une recommandation"
-)
-async def delete_recommendation(
-    recommendation_id: str,
-    current_user: dict = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    """
-    Supprimer une recommandation (suppression logique).
-    
-    La recommandation ne sera pas physiquement supprimée mais marquée comme supprimée.
-    """
-    return RecommendationService.delete_recommendation(
-        db, recommendation_id, str(current_user.id)
-    )
-
-
 @router.post(
-    "/generate/weather/{parcelle_id}",
-    response_model=RecommendationResponse,
-    status_code=status.HTTP_201_CREATED,
-    summary="Générer une recommandation basée sur la météo"
+    "/predict-crop",
+    response_model=UnifiedRecommendationResponse,
+    summary="Recommandation de culture (ML + Système Expert)"
 )
-async def generate_weather_based_recommendation(
-    parcelle_id: str,
-    weather_data: dict = Body(
-        ...,
-        example={
-            "temperature": 28.5,
-            "humidity": 65,
-            "precipitation": 10.5,
-            "wind_speed": 15,
-            "forecast_date": "2025-01-30"
-        }
-    ),
+async def predict_crop_unified(
+    request_data: UnifiedRecommendationRequest,
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
-    Générer automatiquement une recommandation basée sur les données météorologiques.
-    
-    L'algorithme analyse:
-    - La température prévue
-    - Le taux d'humidité
-    - Les précipitations attendues
-    - La vitesse du vent
-    
-    Et génère des recommandations adaptées (irrigation, protection contre le gel, 
-    drainage, etc.)
-    
-    **Données météo attendues:**
-    - **temperature**: Température en °C
-    - **humidity**: Humidité en %
-    - **precipitation**: Précipitations en mm
-    - **wind_speed**: Vitesse du vent en km/h (optionnel)
-    - **forecast_date**: Date de la prévision (optionnel)
+    Endpoint chef d'orchestre qui :
+    1. Appelle le service de Machine Learning pour prédire la culture idéale.
+    2. Utilise le Système Expert pour justifier et donner des conseils sur cette culture.
+    3. Agrège les résultats pour le frontend.
     """
-    return RecommendationService.generate_weather_based_recommendation(
-        db, parcelle_id, str(current_user.id), weather_data
+    # 1. Appel du service ML
+    ml_result = await MLService.predict_crop(request_data.soil_data)
+    recommended_crop = ml_result.majority_crop
+    
+    # 2. Appel du Système Expert pour la justification/conseils
+    expert_result = await ExpertSystemService.query_expert_system(
+        crop_name=recommended_crop,
+        region=request_data.region or "Centre"
+    )
+    
+    # 3. Agrégation et formatage de la réponse
+    justification = "Pas de justification disponible du système expert."
+    if expert_result:
+        justification = expert_result.final_response
+        
+    # 4. Stockage en base de données (si parcelle_id est fourni)
+    if request_data.parcelle_id:
+        from app.models.recommendation import Recommendation
+        import uuid
+        
+        new_rec = Recommendation(
+            id=str(uuid.uuid4()),
+            titre=f"Recommandation pour {recommended_crop}",
+            contenu=justification,
+            priorite="Normal",
+            parcelle_id=request_data.parcelle_id,
+            user_id=str(current_user.id),
+            expert_metadata={
+                "source": "AI_Orchestrator",
+                "ml_confidence": ml_result.confidence,
+                "recommended_crop": recommended_crop,
+                "ml_details": ml_result.dict(),
+                "expert_details": expert_result.dict() if expert_result else None
+            }
+        )
+        db.add(new_rec)
+        db.commit()
+        db.refresh(new_rec)
+        
+    return UnifiedRecommendationResponse(
+        recommended_crop=recommended_crop,
+        confidence_score=ml_result.confidence,
+        justification=justification,
+        ml_details=ml_result,
+        expert_details=expert_result,
+        generated_at=datetime.utcnow().isoformat()
     )

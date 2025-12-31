@@ -6,7 +6,6 @@ from app.api.v1 import (
     recommendation_router,
     location_router,
     sensor_data_router,
-    expert_system_router,
     chirpstack_router
 )
 from app.routers import auth_router, users_router
@@ -84,17 +83,6 @@ api_router.include_router(
     chirpstack_router.router,
     prefix="/chirpstack",
     tags=["ChirpStack"]
-)
-
-# ============================================================================
-# SYSTÈME EXPERT ET RECOMMANDATIONS
-# ============================================================================
-
-# Système Expert (envoi/réception)
-api_router.include_router(
-    expert_system_router.router,
-    prefix="/expert-system",
-    tags=["Système Expert"]
 )
 
 # Recommendations endpoints

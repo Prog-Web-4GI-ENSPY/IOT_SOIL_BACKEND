@@ -49,7 +49,7 @@ async def process_raw_sensor_data(
                 continue
 
             # Extraction d:valeur
-            valeur = float(parts[0].split(":")[1])
+            valeur = float(parts[0].split(":")[1])/100
             
             # Extraction s:code;indice
             sensor_info = parts[1].split(":")[1]

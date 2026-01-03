@@ -1,6 +1,7 @@
 from pydantic import BaseModel, EmailStr, Field
 from typing import Optional
 from datetime import datetime
+from app.schemas.user import UserResponse
 
 
 class LoginRequest(BaseModel):
@@ -15,6 +16,7 @@ class TokenResponse(BaseModel):
     refresh_token: str
     token_type: str = "bearer"
     expires_in: int
+    user: UserResponse
 
 
 class TokenData(BaseModel):

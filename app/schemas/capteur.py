@@ -9,7 +9,7 @@ from app.schemas.common import BaseSchema, ResponseBase
 class CapteurBase(BaseSchema):
     nom: str = Field(..., min_length=2, max_length=200)
     dev_eui: str = Field(..., min_length=16, max_length=16, description="DevEUI LoRaWAN (16 caractères hexadécimaux)")
-    parcelle_id: str = Field(..., description="UUID de la Parcelle associée")
+    parcelle_id: Optional[str] = Field(None, description="UUID de la Parcelle associée")
     code:str =Field(..., description=" code de reference associée")
     date_installation: datetime
     date_activation: Optional[datetime] = None

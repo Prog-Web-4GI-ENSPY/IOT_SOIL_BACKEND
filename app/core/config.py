@@ -39,6 +39,10 @@ class Settings(BaseSettings):
     CHIRPSTACK_API_TOKEN: str
     CHIRPSTACK_APPLICATION_ID: str
 
+    # --- AI Services ---
+    EXPERT_SYSTEM_URL: AnyUrl = Field(default="https://systeme-expert-5iyu.onrender.com")
+    ML_SERVICE_URL: AnyUrl = Field(default="https://crops-predictions.onrender.com")
+
     # --- CORS ---
     # Utilisez 'List' ou 'list' (avec Pydantic v2) pour les listes
     BACKEND_CORS_ORIGINS: List[str] = Field(default=["http://localhost:3000"])

@@ -128,3 +128,21 @@ def delete_capteur(
             status_code=status.HTTP_404_NOT_FOUND, 
             detail=str(e)
         )
+
+    # --- 6. Lecture par Code (GET /code/{code}) ---
+@router.get(
+    "/code/{code}",
+    response_model=CapteurSchema,
+    summary="Récupérer un capteur par son code"
+)
+def read_capteur_by_code(
+    code: str,
+    db: Session = Depends(get_db),
+    # current_user: dict = Depends(get_current_user) # Si vous utilisez l'authentification
+) -> Any:
+    """
+    Récupère les détails d'un capteur spécifique en utilisant son code unique.
+    """
+    # Si vous avez l'user_id, passez-le : capteur_service.get_capteur_by_code(db, code, str(current_user.id))
+    capteur = capteur_service.get_capteur_by_code(db, code=code)
+    return capteur

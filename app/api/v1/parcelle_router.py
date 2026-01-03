@@ -57,7 +57,22 @@ async def get_parcelles_by_terrain(
         db, terrain_id, str(current_user.id), skip, limit
     )
 
+@router.get(
+    "/code/{code}",
+    response_model=ParcelleResponse,
+    summary="Récupérer une parcelle par son code unique"
+)
+async def get_parcelle_by_code(
+    code: str,
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Récupérer les détails d'une parcelle en utilisant son code unique (ex: P-001).
+    """
+    return ParcelleService.get_parcelle_by_code(db, code, str(current_user.id))
 
+    
 @router.get(
     "/terrain/{terrain_id}/statistics",
     summary="Statistiques des parcelles d'un terrain"

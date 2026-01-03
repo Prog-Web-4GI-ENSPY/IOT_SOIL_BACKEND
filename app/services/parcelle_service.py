@@ -21,6 +21,27 @@ class ParcelleService:
         return f"PARC-{terrain_id[:8]}-{count + 1:04d}"
     
     @staticmethod
+    def get_parcelle_by_code(db: Session, code: str, user_id: str) -> Parcelle:
+        """Récupérer une parcelle par son code unique"""
+        from app.models.terrain import Terrain
+
+        # On fait une jointure avec Terrain pour vérifier que la parcelle 
+        # appartient bien à un terrain possédé par l'utilisateur
+        parcelle = db.query(Parcelle).join(Terrain).filter(
+            Parcelle.code == code,
+            Terrain.user_id == user_id,
+            Parcelle.deleted_at.is_(None)
+        ).first()
+        
+        if not parcelle:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Parcelle avec le code '{code}' non trouvée"
+            )
+        
+        return parcelle
+        
+    @staticmethod
     def create_parcelle(
         db: Session, 
         parcelle_data: ParcelleCreate, 

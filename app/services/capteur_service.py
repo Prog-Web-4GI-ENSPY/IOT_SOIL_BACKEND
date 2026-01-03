@@ -23,6 +23,32 @@ class CapteurService:
         """Récupérer un capteur par DevEUI"""
         return db.query(Capteur).filter(Capteur.dev_eui == dev_eui).first()
     
+    def get_capteur_by_code(
+        self, 
+        db: Session, 
+        code: str, 
+        user_id: Optional[str] = None
+    ) -> Optional[Capteur]:
+        """Récupérer un capteur par son code unique"""
+        query = db.query(Capteur)
+        
+        # Si un user_id est fourni, on sécurise la requête par une jointure
+        if user_id:
+            from app.models.terrain import Terrain
+            query = query.join(Parcelle).join(Terrain).filter(
+                Terrain.user_id == user_id
+            )
+            
+        capteur = query.filter(Capteur.code == code).first()
+        
+        if not capteur:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Capteur avec le code '{code}' non trouvé"
+            )
+            
+        return capteur
+        
     def get_capteurs(
         self,
         db: Session,

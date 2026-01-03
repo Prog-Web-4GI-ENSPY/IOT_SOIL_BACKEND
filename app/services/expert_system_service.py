@@ -1,8 +1,9 @@
 import httpx
 import logging
 from fastapi import HTTPException, status
+from typing import List, Optional
 from app.core.config import settings
-from app.schemas.ai_integration import ExpertSystemRequest, ExpertSystemResponse
+from app.schemas.ai_integration import  ExpertSystemResponse
 
 logger = logging.getLogger(__name__)
 
@@ -13,18 +14,16 @@ class ExpertSystemService:
     QUERY_ENDPOINT = f"{BASE_URL}/api/query"
 
     @staticmethod
-    async def query_expert_system(crop_name: str, region: str = "Centre") -> ExpertSystemResponse:
+    async def query_expert_system(query: str, region: str = "Centre") -> Optional[ExpertSystemResponse]:
         """
         Interroge le système expert pour obtenir des conseils sur une culture spécifique
         """
-        query_text = f"Donne-moi des conseils d'experts pour la culture du {crop_name} dans la région {region}"
-        
         payload = {
-            "query": query_text,
-            "region": region
-        }
+        "query": query,
+        "region": region
+            }
         
-        async with httpx.AsyncClient(timeout=15.0) as client:
+        async with httpx.AsyncClient(timeout=30.0) as client:
             try:
                 response = await client.post(
                     ExpertSystemService.QUERY_ENDPOINT,

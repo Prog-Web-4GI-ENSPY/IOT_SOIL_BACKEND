@@ -19,28 +19,33 @@ class MLPredictRequest(BaseModel):
     samples: List[MLSample] = Field(..., max_items=10)
 
 class MLPredictResponse(BaseModel):
-    """Réponse du service ML"""
-    majority_crop: str
-    predictions: List[str]
+    """Réponse du service ML synchronisée avec l'API Render"""
+    recommended_crop: str  # Au lieu de majority_crop
     confidence: float
-    sample_count: int
+    total_samples: int     # Au lieu de sample_count
+    features_order: List[str]
+    all_predictions: List[str]
+    vote_details: Dict[str, int]
 
 class ExpertSystemRequest(BaseModel):
-    """Requête pour le Système Expert /api/query"""
+    """Schéma requis par ExpertSystemService pour l'import"""
     query: str
     region: str = "Centre"
 
 class ExpertSystemResponse(BaseModel):
     """Réponse du Système Expert"""
     final_response: str
-    orchestration: Dict[str, Any]
     query: str
     region: str
+    orchestration: Optional[Dict[str, Any]] = None
+
+
 
 class UnifiedRecommendationRequest(BaseModel):
     """Requête combinée du frontend"""
     soil_data: SoilData
     region: Optional[str] = "Centre"
+    query: Optional[str] = Field(None, description="Question spécifique pour le système expert")
     parcelle_id: Optional[str] = Field(None, description="ID de la parcelle pour stocker la recommandation")
 
 class UnifiedRecommendationResponse(BaseModel):

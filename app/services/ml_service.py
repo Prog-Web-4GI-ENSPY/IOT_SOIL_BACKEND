@@ -23,7 +23,7 @@ class MLService:
             "samples": [soil_data.dict()]
         }
         
-        async with httpx.AsyncClient(timeout=10.0) as client:
+        async with httpx.AsyncClient(timeout=60.0) as client:
             try:
                 response = await client.post(
                     MLService.PREDICT_ENDPOINT,

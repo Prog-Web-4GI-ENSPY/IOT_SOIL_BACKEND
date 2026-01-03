@@ -94,16 +94,20 @@ async def predict_crop_unified(
     2. Utilise le Système Expert pour justifier et donner des conseils sur cette culture.
     3. Agrège les résultats pour le frontend.
     """
-    # 1. Appel du service ML
+    # 1. Prédire la culture d'abord
     ml_result = await MLService.predict_crop(request_data.soil_data)
-    recommended_crop = ml_result.majority_crop
-    
-    # 2. Appel du Système Expert pour la justification/conseils
+    recommended_crop = ml_result.recommended_crop
+
+    # 2. Déterminer la question : soit celle de l'utilisateur, soit la question générée
+    # On utilise la région fournie ou "Centre" par défaut
+    current_region = request_data.region or "Centre"
+    final_query = request_data.query or f"Quand planter le {recommended_crop} dans le {current_region} ?"
+
+    # 3. Passer cette question au service expert
     expert_result = await ExpertSystemService.query_expert_system(
-        crop_name=recommended_crop,
-        region=request_data.region or "Centre"
+        query=final_query, 
+        region=current_region
     )
-    
     # 3. Agrégation et formatage de la réponse
     justification = "Pas de justification disponible du système expert."
     if expert_result:

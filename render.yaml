@@ -1,0 +1,27 @@
+services:
+  # 1. Le service API Backend
+  - type: web
+    name: iot-soil-backend
+    runtime: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "uvicorn main:app --host 0.0.0.0 --port $PORT"
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: iot-soil-db
+          property: connectionString
+      - key: ML_SERVICE_URL
+        value: https://crops-predictions.onrender.com
+      - key: EXPERT_SYSTEM_URL
+        value: https://systeme-expert-5iyu.onrender.com
+      - key: SECRET_KEY
+        generateValue: true # Génère automatiquement une clé sécurisée pour JWT
+      - key: PYTHON_VERSION
+        value: 3.10.0
+
+# 2. La base de données PostgreSQL
+databases:
+  - name: iot-soil-db
+    plan: free # Vous pouvez changer en 'standard' si besoin
+    databaseName: iot_soil_db
+    user: delmat

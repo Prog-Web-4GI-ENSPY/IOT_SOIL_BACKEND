@@ -12,8 +12,7 @@ def test_unified_prediction():
             "K": 43,
             "temperature": 20.8,
             "humidity": 82.0,
-            "ph": 6.5,
-            "rainfall": 202.9
+            "ph": 6.5
         },
         "region": "Centre"
     }

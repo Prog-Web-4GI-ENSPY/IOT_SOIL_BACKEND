@@ -9,7 +9,6 @@ class SoilData(BaseModel):
     temperature: float = Field(..., description="Température en °C")
     humidity: float = Field(..., description="Humidité relative en %")
     ph: float = Field(..., description="Niveau de pH du sol")
-    rainfall: float = Field(..., description="Précipitations en mm")
 
 class MLSample(SoilData):
     """Un échantillon pour le service ML"""

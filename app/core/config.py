@@ -1,7 +1,7 @@
 from typing import Optional, List
 from pydantic import Field, AnyUrl, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
-
+from typing import Optional, List, Union
 
 class Settings(BaseSettings):
     # Pydantic v2 configuration
@@ -26,7 +26,7 @@ class Settings(BaseSettings):
 
     # L'URL finale de la DB. Pydantic peut la valider si le type est AnyUrl.
     # Elle sera lue depuis .env OU construite via la post-initialisation.
-    DATABASE_URL: Optional[AnyUrl] = None
+    DATABASE_URL: Optional[Union[AnyUrl, str]] = None
     
     # --- Security ---
     SECRET_KEY: str
@@ -35,9 +35,9 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_DAYS: int = Field(default=7)
     
     # --- ChirpStack ---
-    CHIRPSTACK_API_URL: AnyUrl
-    CHIRPSTACK_API_TOKEN: str
-    CHIRPSTACK_APPLICATION_ID: str
+    CHIRPSTACK_API_URL: Optional[str] = None
+    CHIRPSTACK_API_TOKEN: Optional[str] = None
+    CHIRPSTACK_APPLICATION_ID: Optional[str] = None
 
     # --- AI Services ---
     EXPERT_SYSTEM_URL: AnyUrl = Field(default="https://systeme-expert-5iyu.onrender.com")

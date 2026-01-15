@@ -29,11 +29,8 @@ class Localite(BaseModel):
 
     nom = Column(String(200), nullable=False, index=True)
     
-    # Coordonnées GPS
-    latitude = Column(Float)
-    longitude = Column(Float)
-    altitude = Column(Float)
     population= Column(Float)
+
 
 
     

@@ -24,30 +24,11 @@ class ClimateZone(str, Enum):
     MEDITERRANEAN = "mediterranean"
 
 
-class Coordinates(BaseModel):
-    latitude: float = Field(..., ge=-90, le=90)
-    longitude: float = Field(..., ge=-180, le=180)
-    altitude: Optional[float] = None
-
-
-class Address(BaseModel):
-    quartier: Optional[str] = None
-    ville: str = Field(..., min_length=2, max_length=200)
-    region: Optional[str] = None
-    pays: str = Field(..., min_length=2, max_length=100)
-    code_postal: Optional[str] = None
-    continent: Continent
-
-
 class LocaliteBase(BaseModel):
     nom: str = Field(..., min_length=2, max_length=200)
     
-    # Coordonnées
-    latitude: float = Field(..., ge=-90, le=90)
-    longitude: float = Field(..., ge=-180, le=180)
-    altitude: Optional[float] = None
-    
     # Adresse
+
     quartier: Optional[str] = None
     ville: str = Field(..., min_length=2, max_length=200)
     region: Optional[str] = None
@@ -75,22 +56,8 @@ class LocaliteUpdate(BaseModel):
     climate_zone: Optional[ClimateZone] = None
 
 
-class LocaliteResponse(BaseModel):
+class LocaliteResponse(LocaliteBase):
     id: str
-    nom: str
-    latitude: float
-    longitude: float
-    altitude: Optional[float]
-    quartier: Optional[str]
-    ville: str
-    region: Optional[str]
-    pays: str
-    code_postal: Optional[str]
-    continent: Continent
-    timezone: str
-    superficie: Optional[float]
-    population: Optional[int]
-    climate_zone: Optional[ClimateZone]
     created_at: datetime
     updated_at: datetime
 

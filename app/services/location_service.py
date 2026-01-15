@@ -14,25 +14,12 @@ class LocaliteService:
     def create_localite(db: Session, localite_data: LocaliteCreate, user_id: str) -> Localite:
         """Créer une nouvelle localité"""
         try:
-            # Vérifier si une localité avec les mêmes coordonnées existe déjà
-            existing = db.query(Localite).filter(
-                Localite.latitude == localite_data.latitude,
-                Localite.longitude == localite_data.longitude,
-                Localite.deleted_at.is_(None)
-            ).first()
+            # Créer la localité sans vérification de coordonnées (supprimées)
 
-            if existing:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Une localité existe déjà à ces coordonnées"
-                )
 
             localite = Localite(
                 id=str(uuid.uuid4()),
                 nom=localite_data.nom,
-                latitude=localite_data.latitude,
-                longitude=localite_data.longitude,
-                altitude=localite_data.altitude,
                 quartier=localite_data.quartier,
                 ville=localite_data.ville,
                 region=localite_data.region,
@@ -162,50 +149,6 @@ class LocaliteService:
                 detail=f"Erreur lors de la suppression: {str(e)}"
             )
 
-    @staticmethod
-    def get_localites_by_proximity(
-        db: Session,
-        latitude: float,
-        longitude: float,
-        radius_km: float = 50
-    ) -> List[Localite]:
-        """
-        Récupérer les localités dans un rayon donné
-        Utilise la formule de Haversine pour calculer la distance
-        """
-        # Conversion du rayon en degrés approximatifs (1 degré ≈ 111 km)
-        radius_deg = radius_km / 111.0
-
-        localites = db.query(Localite).filter(
-            Localite.deleted_at.is_(None),
-            Localite.latitude.between(latitude - radius_deg, latitude + radius_deg),
-            Localite.longitude.between(longitude - radius_deg, longitude + radius_deg)
-        ).all()
-
-        # Filtrer avec calcul précis de distance (formule de Haversine)
-        import math
-
-        def haversine_distance(lat1, lon1, lat2, lon2):
-            R = 6371  # Rayon de la Terre en km
-            dlat = math.radians(lat2 - lat1)
-            dlon = math.radians(lon2 - lon1)
-            a = (math.sin(dlat / 2) ** 2 +
-                 math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) *
-                 math.sin(dlon / 2) ** 2)
-            c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
-            return R * c
-
-        result = []
-        for loc in localites:
-            distance = haversine_distance(latitude, longitude, loc.latitude, loc.longitude)
-            if distance <= radius_km:
-                # Ajouter la distance comme attribut temporaire
-                loc.distance_km = round(distance, 2)
-                result.append(loc)
-
-        # Trier par distance
-        result.sort(key=lambda x: x.distance_km)
-        return result
 
     @staticmethod
     def get_localite_statistics(db: Session) -> dict:

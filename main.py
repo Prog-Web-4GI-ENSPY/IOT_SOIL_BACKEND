@@ -13,7 +13,7 @@ app = FastAPI(
     version=settings.APP_VERSION,
     openapi_url=f"{settings.API_V1_PREFIX}/openapi.json",
     servers=[
-        {"url": "http://iot-soil-backend.onrender.com", "description": "Production server"},
+        {"url": "https://iot-soil-backend.onrender.com", "description": "Production server"},
         {"url": "http://localhost:8000", "description": "Local development server"},
     ]
 )

@@ -24,22 +24,22 @@ async def create_localite(
     db: Session = Depends(get_db)
 ):
     """
-    Créer une nouvelle localité avec ses coordonnées GPS et informations climatiques.
+    Créer une nouvelle localité avec ses informations géographiques et climatiques.
 
-    **Coordonnées :**
+    **Champs requis :**
+    - **nom**: Nom de la localité
     - **latitude**: -90 à 90
     - **longitude**: -180 à 180
-    - **altitude**: Altitude en mètres (optionnel)
-
-    **Adresse :**
-    - **ville**: Nom de la ville (obligatoire)
-    - **pays**: Nom du pays (obligatoire)
-    - **continent**: Continent (obligatoire)
-    - **quartier**, **region**, **code_postal**: Optionnels
-
-    **Informations supplémentaires :**
+    - **ville**: Nom de la ville
+    - **pays**: Nom du pays
+    - **continent**: Continent
     - **timezone**: Fuseau horaire (ex: "Africa/Douala")
     - **superficie**: Superficie en km²
+
+    **Champs optionnels :**
+    - **altitude**: Altitude en mètres
+    - **quartier**, **region**, **code_postal**: Informations d'adresse
+    - **population**: Nombre d'habitants
     - **climate_zone**: Zone climatique
     """
     return LocaliteService.create_localite(db, localite_data, str(current_user.id))
@@ -113,33 +113,6 @@ async def get_countries_list(
     return LocaliteService.get_countries_list(db)
 
 
-@router.get(
-    "/proximity",
-    response_model=List[LocaliteResponse],
-    summary="Localités à proximité"
-)
-async def get_localites_by_proximity(
-    latitude: float = Query(..., ge=-90, le=90, description="Latitude du point de référence"),
-    longitude: float = Query(..., ge=-180, le=180, description="Longitude du point de référence"),
-    radius_km: float = Query(50, ge=1, le=500, description="Rayon de recherche en km"),
-    db: Session = Depends(get_db)
-):
-    """
-    Trouver les localités dans un rayon donné autour d'un point GPS.
-
-    Utilise la formule de Haversine pour calculer les distances précises.
-    Les résultats sont triés par distance croissante.
-
-    **Paramètres :**
-    - **latitude**: Latitude du point central (-90 à 90)
-    - **longitude**: Longitude du point central (-180 à 180)
-    - **radius_km**: Rayon de recherche en kilomètres (1 à 500)
-
-    **Exemple :**
-    Pour trouver les localités à 30km de Yaoundé (3.8667°N, 11.5167°E):
-    `/localites/proximity?latitude=3.8667&longitude=11.5167&radius_km=30`
-    """
-    return LocaliteService.get_localites_by_proximity(db, latitude, longitude, radius_km)
 
 
 @router.get(

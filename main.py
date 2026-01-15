@@ -11,7 +11,11 @@ Base.metadata.create_all(bind=engine)
 app = FastAPI(
     title=settings.APP_NAME,
     version=settings.APP_VERSION,
-    openapi_url=f"{settings.API_V1_PREFIX}/openapi.json"
+    openapi_url=f"{settings.API_V1_PREFIX}/openapi.json",
+    servers=[
+        {"url": "http://iot-soil-backend.onrender.com", "description": "Production server"},
+        {"url": "http://localhost:8000", "description": "Local development server"},
+    ]
 )
 
 # CORS

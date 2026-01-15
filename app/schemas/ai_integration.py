@@ -56,3 +56,9 @@ class UnifiedRecommendationResponse(BaseModel):
     ml_details: MLPredictResponse
     expert_details: Optional[ExpertSystemResponse] = None
     generated_at: str
+
+class ParcellePredictionRequest(BaseModel):
+    """Requête simplifiée pour la prédiction par parcelle"""
+    region: Optional[str] = "Centre"
+    query: Optional[str] = Field(None, description="Question spécifique pour le système expert")
+

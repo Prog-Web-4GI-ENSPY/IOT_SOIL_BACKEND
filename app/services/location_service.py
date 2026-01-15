@@ -16,8 +16,8 @@ class LocaliteService:
         try:
             # Vérifier si une localité avec les mêmes coordonnées existe déjà
             existing = db.query(Localite).filter(
-                Localite.latitude == localite_data.coordinates.latitude,
-                Localite.longitude == localite_data.coordinates.longitude,
+                Localite.latitude == localite_data.latitude,
+                Localite.longitude == localite_data.longitude,
                 Localite.deleted_at.is_(None)
             ).first()
 
@@ -30,20 +30,21 @@ class LocaliteService:
             localite = Localite(
                 id=str(uuid.uuid4()),
                 nom=localite_data.nom,
-                latitude=localite_data.coordinates.latitude,
-                longitude=localite_data.coordinates.longitude,
-                altitude=localite_data.coordinates.altitude,
-                quartier=localite_data.address.quartier,
-                ville=localite_data.address.ville,
-                region=localite_data.address.region,
-                pays=localite_data.address.pays,
-                code_postal=localite_data.address.code_postal,
-                continent=localite_data.address.continent,
+                latitude=localite_data.latitude,
+                longitude=localite_data.longitude,
+                altitude=localite_data.altitude,
+                quartier=localite_data.quartier,
+                ville=localite_data.ville,
+                region=localite_data.region,
+                pays=localite_data.pays,
+                code_postal=localite_data.code_postal,
+                continent=localite_data.continent,
                 timezone=localite_data.timezone,
                 superficie=localite_data.superficie,
                 population=localite_data.population,
                 climate_zone=localite_data.climate_zone
             )
+
 
             db.add(localite)
             db.commit()

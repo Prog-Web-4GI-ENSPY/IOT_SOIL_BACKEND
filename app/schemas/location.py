@@ -41,12 +41,26 @@ class Address(BaseModel):
 
 class LocaliteBase(BaseModel):
     nom: str = Field(..., min_length=2, max_length=200)
-    coordinates: Coordinates
-    address: Address
+    
+    # Coordonnées
+    latitude: float = Field(..., ge=-90, le=90)
+    longitude: float = Field(..., ge=-180, le=180)
+    altitude: Optional[float] = None
+    
+    # Adresse
+    quartier: Optional[str] = None
+    ville: str = Field(..., min_length=2, max_length=200)
+    region: Optional[str] = None
+    pays: str = Field(..., min_length=2, max_length=100)
+    code_postal: Optional[str] = None
+    continent: Continent
+    
+    # Informations supplémentaires
     timezone: str = Field(..., max_length=50)
     superficie: Optional[float] = Field(None, gt=0)
     population: Optional[int] = Field(None, gt=0)
     climate_zone: Optional[ClimateZone] = None
+
 
 
 class LocaliteCreate(LocaliteBase):

@@ -106,15 +106,16 @@ class CapteurService:
                 )
         
         # 3. Vérifier l'unicité du DevEUI
-        existing_dev_eui = db.query(Capteur).filter(
-            Capteur.dev_eui == capteur_data.dev_eui
-        ).first()
-        
-        if existing_dev_eui:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Ce DevEUI est déjà utilisé"
-            )
+        if capteur_data.dev_eui:
+            existing_dev_eui = db.query(Capteur).filter(
+                Capteur.dev_eui == capteur_data.dev_eui
+            ).first()
+            
+            if existing_dev_eui:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Ce DevEUI est déjà utilisé"
+                )
         
         # 4. Vérifier l'unicité du code
         if capteur_data.code:

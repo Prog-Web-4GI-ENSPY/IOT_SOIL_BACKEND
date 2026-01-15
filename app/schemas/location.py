@@ -26,6 +26,8 @@ class ClimateZone(str, Enum):
 
 class LocaliteBase(BaseModel):
     nom: str = Field(..., min_length=2, max_length=200)
+    latitude: Optional[float] = Field(None, ge=-90, le=90)
+    longitude: Optional[float] = Field(None, ge=-180, le=180)
     
     # Adresse
 

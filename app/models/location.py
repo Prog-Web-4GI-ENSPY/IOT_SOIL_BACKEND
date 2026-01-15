@@ -28,6 +28,8 @@ class Localite(BaseModel):
     __tablename__ = "localites"
 
     nom = Column(String(200), nullable=False, index=True)
+    latitude = Column(Float, nullable=True)
+    longitude = Column(Float, nullable=True)
     
     population= Column(Float)
 

@@ -20,6 +20,8 @@ class TerrainService:
                 description=terrain_data.description,
                 type_terrain=terrain_data.type_terrain,
                 localite_id=terrain_data.localite_id,
+                latitude=terrain_data.latitude,
+                longitude=terrain_data.longitude,
                 superficie_totale=terrain_data.superficie_totale,
                 perimetre=terrain_data.perimetre,
                 pente=terrain_data.pente,

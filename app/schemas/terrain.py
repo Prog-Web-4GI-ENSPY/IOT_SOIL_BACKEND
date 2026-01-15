@@ -23,8 +23,8 @@ class TerrainBase(BaseModel):
     description: Optional[str] = Field(None, max_length=1000)
     type_terrain: TypeTerrain
     localite_id: str
-    latitude: float = Field(..., ge=-90, le=90)
-    longitude: float = Field(..., ge=-180, le=180)
+    latitude: Optional[float] = Field(None, ge=-90, le=90)
+    longitude: Optional[float] = Field(None, ge=-180, le=180)
     superficie_totale: float = Field(..., gt=0)
     perimetre: Optional[float] = Field(None, gt=0)
     pente: Optional[float] = Field(None, ge=0, le=90)

@@ -29,7 +29,9 @@ class LocaliteService:
                 timezone=localite_data.timezone,
                 superficie=localite_data.superficie,
                 population=localite_data.population,
-                climate_zone=localite_data.climate_zone
+                climate_zone=localite_data.climate_zone,
+                latitude=localite_data.latitude,
+                longitude=localite_data.longitude
             )
 
 

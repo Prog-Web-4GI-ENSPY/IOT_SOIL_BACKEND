@@ -35,8 +35,10 @@ class CapteurService:
         # Si un user_id est fourni, on sécurise la requête par une jointure
         if user_id:
             from app.models.terrain import Terrain
-            query = query.join(Parcelle).join(Terrain).filter(
-                Terrain.user_id == user_id
+            from app.models.cap_parcelle import CapParcelle
+            query = query.join(CapParcelle).join(Parcelle).join(Terrain).filter(
+                Terrain.user_id == user_id,
+                CapParcelle.date_desassignation == None
             )
             
         capteur = query.filter(Capteur.code == code).first()
@@ -63,9 +65,13 @@ class CapteurService:
         """Récupérer une liste de capteurs avec filtres"""
         query = db.query(Capteur)
         
-        # Filtrer par parcelle
+        # Filtrer par parcelle (via CapParcelle)
         if parcelle_id:
-            query = query.filter(Capteur.parcelle_id == parcelle_id)
+            from app.models.cap_parcelle import CapParcelle
+            query = query.join(CapParcelle).filter(
+                CapParcelle.parcelle_id == parcelle_id,
+                CapParcelle.date_desassignation == None
+            )
         
         # Filtrer par terrain (via parcelle)
         if terrain_id:
@@ -73,11 +79,13 @@ class CapteurService:
                 Parcelle.terrain_id == terrain_id
             )
         
-        # Filtrer par user (via terrain et parcelle)
+        # Filtrer par user (via terrain, parcelle et CapParcelle)
         if user_id:
             from app.models.terrain import Terrain
-            query = query.join(Parcelle).join(Terrain).filter(
-                Terrain.user_id == user_id
+            from app.models.cap_parcelle import CapParcelle
+            query = query.join(CapParcelle).join(Parcelle).join(Terrain).filter(
+                Terrain.user_id == user_id,
+                CapParcelle.date_desassignation == None
             )
         
         # Filtrer par statut
@@ -92,47 +100,8 @@ class CapteurService:
     
     def create_capteur(self, db: Session, capteur_data: CapteurCreate) -> Capteur:
         """Créer un nouveau capteur"""
-        # 1. Vérifier que la parcelle existe (si fournie)
-        if capteur_data.parcelle_id:
-            target_parcelle_id = str(capteur_data.parcelle_id)
-            parcelle = db.query(Parcelle).filter(
-                Parcelle.id == target_parcelle_id
-            ).first()
-            
-            if not parcelle:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"Parcelle {target_parcelle_id} non trouvée"
-                )
-        
-        # 3. Vérifier l'unicité du DevEUI
-        if capteur_data.dev_eui:
-            existing_dev_eui = db.query(Capteur).filter(
-                Capteur.dev_eui == capteur_data.dev_eui
-            ).first()
-            
-            if existing_dev_eui:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Ce DevEUI est déjà utilisé"
-                )
-        
-        # 4. Vérifier l'unicité du code
-        if capteur_data.code:
-            existing_code = db.query(Capteur).filter(
-                Capteur.code == capteur_data.code
-            ).first()
-            
-            if existing_code:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Ce code est déjà utilisé"
-                )
-        
         # 5. Créer l'objet
         capteur_dict = capteur_data.dict()
-        if capteur_dict.get('parcelle_id'):
-            capteur_dict['parcelle_id'] = str(capteur_dict['parcelle_id'])
         
         db_capteur = Capteur(
             **capteur_dict,

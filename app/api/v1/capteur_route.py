@@ -6,6 +6,7 @@ from app.database import get_db
 # Importez les schémas, le service et le modèle
 from app.schemas.capteur import Capteur as CapteurSchema, CapteurCreate, CapteurUpdate
 from app.services.capteur_service import capteur_service
+from app.services.capteur_parcelle_service import assign_capteur_to_parcelle, desassign_capteur_de_parcelle
 from app.models.capteur import Capteur
 
 router = APIRouter()
@@ -23,7 +24,7 @@ def create_capteur(
     capteur_in: CapteurCreate,
 ) -> Any:
     """
-    Crée un capteur. Nécessite `nom`, `dev_eui`, `parcelle_id` et `date_installation`.
+    Crée un capteur. Nécessite `nom`, `dev_eui`, `code` et `date_installation`.
     """
     try:
         capteur = capteur_service.create_capteur(db, capteur_data=capteur_in)
@@ -129,7 +130,7 @@ def delete_capteur(
             detail=str(e)
         )
 
-    # --- 6. Lecture par Code (GET /code/{code}) ---
+# --- 6. Lecture par Code (GET /code/{code}) ---
 @router.get(
     "/code/{code}",
     response_model=CapteurSchema,
@@ -146,3 +147,33 @@ def read_capteur_by_code(
     # Si vous avez l'user_id, passez-le : capteur_service.get_capteur_by_code(db, code, str(current_user.id))
     capteur = capteur_service.get_capteur_by_code(db, code=code)
     return capteur
+
+# --- 7. Assignation/Désassignation ---
+
+@router.post(
+    "/assign",
+    summary="Assigner un capteur à une parcelle"
+)
+def assign_capteur(
+    code_parcelle: str,
+    code_capteur: str,
+    db: Session = Depends(get_db)
+) -> Any:
+    """
+    Assigne un capteur à une parcelle en utilisant leurs codes respectifs.
+    """
+    return assign_capteur_to_parcelle(db, code_parcelle, code_capteur)
+
+@router.post(
+    "/desassign",
+    summary="Désassigner un capteur d'une parcelle"
+)
+def desassign_capteur(
+    code_parcelle: str,
+    code_capteur: str,
+    db: Session = Depends(get_db)
+) -> Any:
+    """
+    Désassigne un capteur d'une parcelle en utilisant leurs codes respectifs.
+    """
+    return desassign_capteur_de_parcelle(db, code_parcelle, code_capteur)

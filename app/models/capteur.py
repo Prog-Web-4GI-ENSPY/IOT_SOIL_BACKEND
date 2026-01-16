@@ -20,10 +20,8 @@ class Capteur(BaseModel):
     code = Column(String(200), nullable=False, index=True)
 
     # Configuration LoRaWAN
-    dev_eui = Column(String(16), unique=True, nullable=True, index=True)  # 16 caractères hex
+    dev_eui = Column(String(16), unique=True, nullable=False, index=True)  # 16 caractères hex
 
-    # Localisation
-    parcelle_id = Column(String(36), ForeignKey("parcelles.id"), nullable=True, index=True)
 
     # Colonne Enum utilisant la classe StatutCapteur
 
@@ -38,7 +36,5 @@ class Capteur(BaseModel):
     date_activation = Column(DateTime)
 
 
-    # Relations
-    parcelle = relationship("Parcelle", back_populates="capteurs")
     donnees = relationship("SensorMeasurements", back_populates="capteur", cascade="all, delete-orphan")
 

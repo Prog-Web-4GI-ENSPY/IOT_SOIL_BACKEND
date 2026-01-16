@@ -71,8 +71,6 @@ def login(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    # Mise à jour du dernier accès
-    UserService.update_last_access(db, user)
 
     # Création des tokens
     access_token = create_access_token(

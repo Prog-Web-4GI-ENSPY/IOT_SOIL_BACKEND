@@ -3,7 +3,7 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from fastapi import HTTPException, status
-from app.models.user import User, UserRole
+from app.models.user import User, UserRole, UserStatus
 from app.schemas.user import UserCreate, UserUpdate
 from app.core.security import get_password_hash, verify_password
 
@@ -105,11 +105,30 @@ class UserService:
             return None
         
         # Mise a jour du dernier acces
+        return UserService.update_last_access(db, user)
+
+    @staticmethod
+    def update_last_access(db: Session, user: User) -> User:
+        """Met a jour la date de dernier acces"""
         user.dernier_acces = datetime.utcnow()
         db.commit()
         db.refresh(user)
-        
         return user
+
+    @staticmethod
+    def change_user_status(db: Session, user_id: str, status_val: UserStatus) -> User:
+        """Change le statut d'un utilisateur"""
+        db_user = UserService.get_user_by_id(db, user_id)
+        if not db_user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found"
+            )
+        
+        db_user.status = status_val
+        db.commit()
+        db.refresh(db_user)
+        return db_user
 
     @staticmethod
     def change_password(
@@ -135,12 +154,16 @@ class UserService:
         db: Session,
         skip: int = 0,
         limit: int = 100,
-        role: Optional[UserRole] = None
+        role: Optional[UserRole] = None,
+        status: Optional[UserStatus] = None
     ) -> List[User]:
         """Recupere tous les utilisateurs"""
         query = db.query(User)
 
         if role:
             query = query.filter(User.role == role)
+        
+        if status:
+            query = query.filter(User.status == status)
 
         return query.offset(skip).limit(limit).all()

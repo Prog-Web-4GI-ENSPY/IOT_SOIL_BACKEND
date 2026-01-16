@@ -7,34 +7,6 @@ from enum import Enum
 class UserRole(str, Enum):
     ADMIN = "admin"
     USER = "user"
-    MANAGER = "manager"
-    VIEWER = "viewer"
-
-
-class UserStatus(str, Enum):
-    ACTIVE = "active"
-    INACTIVE = "inactive"
-    SUSPENDED = "suspended"
-    PENDING = "pending"
-
-
-class NotificationPreferences(BaseModel):
-    email: bool = True
-    push: bool = True
-    sms: bool = False
-
-
-class UnitePreferences(BaseModel):
-    temperature: str = "celsius"  # celsius | fahrenheit
-    surface: str = "hectare"  # hectare | acre
-    precipitation: str = "mm"  # mm | inch
-
-
-class UserPreferences(BaseModel):
-    langue: str = "fr"  # fr | en | es
-    theme: str = "light"  # light | dark | auto
-    notifications: NotificationPreferences = NotificationPreferences()
-    unites: UnitePreferences = UnitePreferences()
 
 
 class UserBase(BaseModel):
@@ -42,8 +14,6 @@ class UserBase(BaseModel):
     prenom: str = Field(..., min_length=2, max_length=100)
     email: EmailStr
     telephone: Optional[str] = Field(None, max_length=20)
-    role: UserRole = UserRole.USER
-    preferences: Optional[UserPreferences] = None
 
 
 class UserCreate(UserBase):
@@ -65,12 +35,15 @@ class UserUpdate(BaseModel):
     prenom: Optional[str] = Field(None, min_length=2, max_length=100)
     telephone: Optional[str] = None
     avatar: Optional[str] = None
-    preferences: Optional[UserPreferences] = None
 
 
-class UserResponse(UserBase):
+class UserResponse(BaseModel):
     id: str
-    status: UserStatus
+    nom: str
+    prenom: str
+    email: EmailStr
+    telephone: Optional[str]
+    role: UserRole
     avatar: Optional[str] = None
     date_inscription: datetime
     dernier_acces: Optional[datetime] = None

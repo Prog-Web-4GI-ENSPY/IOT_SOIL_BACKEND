@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, DateTime, Enum as SQLEnum, JSON
+from sqlalchemy import Column, String, DateTime, Enum as SQLEnum
 from sqlalchemy.orm import relationship
 from datetime import datetime
 import enum
@@ -7,17 +7,6 @@ from .base import BaseModel
 class UserRole(str, enum.Enum):
     ADMIN = "admin"
     USER = "user"
-    MANAGER = "manager"
-    VIEWER = "viewer"
-
-
-class UserStatus(str, enum.Enum):
-    ACTIVE = "active"
-    INACTIVE = "inactive"
-    SUSPENDED = "suspended"
-    PENDING = "pending"
-
-
 
 
 class User(BaseModel):
@@ -29,11 +18,9 @@ class User(BaseModel):
     telephone = Column(String(20))
     password_hash = Column(String(255), nullable=False)
     role = Column(SQLEnum(UserRole), default=UserRole.USER, nullable=False)
-    status = Column(SQLEnum(UserStatus), default=UserStatus.ACTIVE, nullable=False)
     avatar = Column(String(500))
     date_inscription = Column(DateTime, default=datetime.utcnow, nullable=False)
     dernier_acces = Column(DateTime)
-    preferences = Column(JSON)  # Stocke UserPreferences en JSON
     
 
     # Relations

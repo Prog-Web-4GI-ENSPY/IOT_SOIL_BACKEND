@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 
 from app.core.config import settings
-from app.models.user import User
+from app.models.user import User, UserRole
 from app.schemas.user import UserCreate
 
 
@@ -107,7 +107,8 @@ class AuthService:
     def register_user(
         self,
         db: Session,
-        user_data: UserCreate
+        user_data: UserCreate,
+        role: UserRole = UserRole.USER
     ) -> User:
         """Enregistrer un nouvel utilisateur"""
         # Vérifier si l'email existe déjà
@@ -130,8 +131,7 @@ class AuthService:
             email=user_data.email,
             telephone=user_data.telephone,
             password_hash=hashed_password,
-            role=user_data.role,
-            preferences=user_data.preferences.dict() if user_data.preferences else None
+            role=role
         )
         
         db.add(db_user)

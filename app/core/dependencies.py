@@ -3,7 +3,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from app.database import get_db
-from app.models.user import User, UserRole, UserStatus
+from app.models.user import User, UserRole
 from app.core.security import verify_token
 from app.schemas.auth import TokenData
 
@@ -47,18 +47,6 @@ def get_current_user(
     if user is None:
         raise credentials_exception
 
-    if user.status == UserStatus.SUSPENDED:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Account suspended"
-        )
-
-    if user.status == UserStatus.INACTIVE:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Account inactive"
-        )
-
     return user
 
 
@@ -66,22 +54,8 @@ def get_current_active_user(
     current_user: User = Depends(get_current_user)
 ) -> User:
     """
-    Récupère l'utilisateur actuellement authentifié et actif
-
-    Args:
-        current_user: L'utilisateur actuel
-
-    Returns:
-        User: L'utilisateur actif
-
-    Raises:
-        HTTPException: Si l'utilisateur n'est pas actif
+    Récupère l'utilisateur actuellement authentifié (Simplifié)
     """
-    if current_user.status != UserStatus.ACTIVE:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Inactive user"
-        )
     return current_user
 
 

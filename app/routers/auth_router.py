@@ -24,25 +24,24 @@ from app.models.user import User
 router = APIRouter()
 
 
-@router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
-def register(
+@router.post("/register/user", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+def register_user(
     user_data: UserCreate,
     db: Session = Depends(get_db)
 ):
-    """
-    Inscription d'un nouvel utilisateur
+    """Inscription d'un utilisateur classique"""
+    from app.services.auth_service import auth_service
+    return auth_service.register_user(db, user_data, role=UserRole.USER)
 
-    Args:
-        user_data: Données de l'utilisateur à créer
-        db: Session de base de données
 
-    Returns:
-        UserResponse: L'utilisateur créé
-
-    Raises:
-        HTTPException: Si l'email existe déjà
-    """
-    return UserService.create_user(db, user_data)
+@router.post("/register/admin", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+def register_admin(
+    user_data: UserCreate,
+    db: Session = Depends(get_db)
+):
+    """Inscription d'un administrateur"""
+    from app.services.auth_service import auth_service
+    return auth_service.register_user(db, user_data, role=UserRole.ADMIN)
 
 
 @router.post("/login", response_model=TokenResponse)

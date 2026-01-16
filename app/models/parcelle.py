@@ -65,7 +65,6 @@ class Parcelle(BaseModel):
     # Relations
     terrain = relationship("Terrain", back_populates="parcelles")
     recommandations = relationship("Recommendation", back_populates="parcelle")
-    capteurs = relationship("Capteur", back_populates="parcelle", cascade="all, delete-orphan")
     historique_cultures = relationship("HistoriqueCulture", back_populates="parcelle", cascade="all, delete-orphan")
 
 

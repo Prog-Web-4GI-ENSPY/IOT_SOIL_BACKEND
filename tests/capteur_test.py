@@ -2,7 +2,7 @@ import pytest
 from fastapi.testclient import TestClient
 from app.models.location import Localite, Continent, ClimateZone
 from app.models.terrain import Terrain, TypeTerrain, StatutTerrain
-from app.models.parcelle import Parcelle, TypeSol, StatutParcelle
+from app.models.parcelle import Parcelle
 
 
 @pytest.fixture
@@ -16,7 +16,8 @@ def test_localite(db):
         pays="Cameroun",
         continent=Continent.AFRIQUE,
         timezone="Africa/Douala",
-        climate_zone=ClimateZone.TROPICAL
+        climate_zone=ClimateZone.TROPICAL,
+        superficie=10.0
     )
     db.add(localite)
     db.commit()
@@ -50,17 +51,7 @@ def test_parcelle(db, test_terrain):
         nom="Parcelle Test",
         code="TEST-001",
         terrain_id=test_terrain.id,
-        superficie=2.5,
-        polygone=[
-            {"latitude": 3.8500, "longitude": 11.5030},
-            {"latitude": 3.8510, "longitude": 11.5030},
-            {"latitude": 3.8510, "longitude": 11.5040},
-            {"latitude": 3.8500, "longitude": 11.5040}
-        ],
-        centroid_lat=3.8505,
-        centroid_lng=11.5035,
-        type_sol=TypeSol.ARGILEUX,
-        statut=StatutParcelle.ACTIVE
+        superficie=2.5
     )
     db.add(parcelle)
     db.commit()

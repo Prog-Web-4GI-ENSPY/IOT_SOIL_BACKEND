@@ -6,32 +6,6 @@ from .base import BaseModel
 import uuid
 
 
-class TypeSol(str, enum.Enum):
-    ARGILEUX = "argileux"
-    SABLEUX = "sableux"
-    LIMONEUX = "limoneux"
-    HUMIFERE = "humifère"
-    CALCAIRE = "calcaire"
-    TOURBEUX = "tourbeux"
-
-
-class StatutParcelle(str, enum.Enum):
-    ACTIVE = "active"
-    EN_CULTURE = "en_culture"
-    EN_JACHERE = "en_jachère"
-    EN_PREPARATION = "en_préparation"
-    RECOLTE_EN_COURS = "récolte_en_cours"
-
-
-
-class SystemeIrrigation(str, enum.Enum):
-    GOUTTE_A_GOUTTE = "goutte_à_goutte"
-    ASPERSION = "aspersion"
-    GRAVITAIRE = "gravitaire"
-    PIVOT = "pivot"
-    AUCUN = "aucun"
-
-
 class Parcelle(BaseModel):
     __tablename__ = "parcelles"
 
@@ -44,21 +18,6 @@ class Parcelle(BaseModel):
     
     # Géométrie
     superficie = Column(Float, nullable=False)  # hectares
-
-    
-    # Caractéristiques du sol (JSON pour flexibilité)
-    type_sol = Column(SQLEnum(TypeSol), nullable=True)
-
-    
-    # Statut et culture
-    statut = Column(SQLEnum(StatutParcelle), default=StatutParcelle.ACTIVE, nullable=False)
-    culture_actuelle = Column(String(100))  # Nom de la culture en texte simple
-    date_plantation = Column(DateTime)
-    date_recolte_estimee = Column(DateTime)
-    
-    # Irrigation
-    systeme_irrigation = Column(SQLEnum(SystemeIrrigation))
-    source_eau = Column(String(200))
 
     sensor_measurements = relationship( "SensorMeasurements", back_populates="parcelle" ) 
 

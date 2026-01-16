@@ -2,6 +2,11 @@ from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
 from jose import JWTError, jwt
 from passlib.context import CryptContext
+import bcrypt
+
+# Workaround for passlib + bcrypt 4.0+ compatibility
+if not hasattr(bcrypt, "__about__"):
+    bcrypt.__about__ = type('About', (), {'__version__': bcrypt.__version__})
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 

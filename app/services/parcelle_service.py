@@ -133,6 +133,17 @@ class ParcelleService:
             Parcelle.terrain_id == terrain_id,
             Parcelle.deleted_at.is_(None)
         ).offset(skip).limit(limit).all()
+
+    @staticmethod
+    def get_all_parcelles_admin(
+        db: Session,
+        skip: int = 0,
+        limit: int = 100
+    ) -> List[Parcelle]:
+        """Récupérer toutes les parcelles du système (Admin uniquement)"""
+        return db.query(Parcelle).filter(
+            Parcelle.deleted_at.is_(None)
+        ).offset(skip).limit(limit).all()
     
     @staticmethod
     def update_parcelle(

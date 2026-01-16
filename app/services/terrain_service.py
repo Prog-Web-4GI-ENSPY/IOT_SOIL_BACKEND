@@ -65,6 +65,17 @@ class TerrainService:
         )
         
         return query.offset(skip).limit(limit).all()
+
+    @staticmethod
+    def get_all_terrains_admin(
+        db: Session,
+        skip: int = 0,
+        limit: int = 100
+    ) -> List[Terrain]:
+        """Récupérer tous les terrains du système (Admin uniquement)"""
+        return db.query(Terrain).filter(
+            Terrain.deleted_at.is_(None)
+        ).offset(skip).limit(limit).all()
     
     @staticmethod
     def update_terrain(

@@ -19,7 +19,7 @@ from app.core.security import (
 )
 from app.core.dependencies import get_current_user, get_current_active_user
 from app.core.config import settings
-from app.models.user import User
+from app.models.user import User, UserRole
 
 router = APIRouter()
 

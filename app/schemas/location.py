@@ -26,22 +26,14 @@ class ClimateZone(str, Enum):
 
 class LocaliteBase(BaseModel):
     nom: str = Field(..., min_length=2, max_length=200)
-    latitude: Optional[float] = Field(None, ge=-90, le=90)
-    longitude: Optional[float] = Field(None, ge=-180, le=180)
     
     # Adresse
-
-    quartier: Optional[str] = None
     ville: str = Field(..., min_length=2, max_length=200)
     region: Optional[str] = None
     pays: str = Field(..., min_length=2, max_length=100)
-    code_postal: Optional[str] = None
     continent: Continent
     
     # Informations supplémentaires
-    timezone: str = Field(..., max_length=50)
-    superficie: Optional[float] = Field(None, gt=0)
-    population: Optional[int] = Field(None, gt=0)
     climate_zone: Optional[ClimateZone] = None
 
 
@@ -52,9 +44,6 @@ class LocaliteCreate(LocaliteBase):
 
 class LocaliteUpdate(BaseModel):
     nom: Optional[str] = Field(None, min_length=2, max_length=200)
-    timezone: Optional[str] = None
-    superficie: Optional[float] = Field(None, gt=0)
-    population: Optional[int] = Field(None, gt=0)
     climate_zone: Optional[ClimateZone] = None
 
 

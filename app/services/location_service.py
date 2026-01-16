@@ -20,18 +20,11 @@ class LocaliteService:
             localite = Localite(
                 id=str(uuid.uuid4()),
                 nom=localite_data.nom,
-                quartier=localite_data.quartier,
                 ville=localite_data.ville,
                 region=localite_data.region,
                 pays=localite_data.pays,
-                code_postal=localite_data.code_postal,
                 continent=localite_data.continent,
-                timezone=localite_data.timezone,
-                superficie=localite_data.superficie,
-                population=localite_data.population,
-                climate_zone=localite_data.climate_zone,
-                latitude=localite_data.latitude,
-                longitude=localite_data.longitude
+                climate_zone=localite_data.climate_zone
             )
 
 
@@ -160,9 +153,7 @@ class LocaliteService:
                 Localite.deleted_at.is_(None)
             ).scalar(),
             "by_continent": {},
-            "by_climate_zone": {},
-            "superficie_totale": 0,
-            "population_totale": 0
+            "by_climate_zone": {}
         }
 
         # Statistiques par continent
@@ -186,15 +177,6 @@ class LocaliteService:
 
         for climate, count in climate_stats:
             stats["by_climate_zone"][climate.value if climate else "Non défini"] = count
-
-        # Superficie et population totales
-        totals = db.query(
-            func.sum(Localite.superficie).label('superficie'),
-            func.sum(Localite.population).label('population')
-        ).filter(Localite.deleted_at.is_(None)).first()
-
-        stats["superficie_totale"] = float(totals.superficie or 0)
-        stats["population_totale"] = int(totals.population or 0)
 
         return stats
 

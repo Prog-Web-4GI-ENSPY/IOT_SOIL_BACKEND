@@ -62,18 +62,6 @@ class ParcelleService:
                 detail="Terrain non trouvé ou accès refusé"
             )
         
-        # Vérifier que la superficie de la parcelle ne dépasse pas celle du terrain
-        superficie_parcelles = db.query(func.sum(Parcelle.superficie)).filter(
-            Parcelle.terrain_id == parcelle_data.terrain_id,
-            Parcelle.deleted_at.is_(None)
-        ).scalar() or 0
-        
-        if superficie_parcelles + parcelle_data.superficie > terrain.superficie_totale:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="La superficie totale des parcelles dépasse celle du terrain"
-            )
-        
         try:
             code = parcelle_data.code or ParcelleService.generate_code(db, parcelle_data.terrain_id)
             

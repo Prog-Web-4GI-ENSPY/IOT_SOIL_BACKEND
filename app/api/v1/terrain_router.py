@@ -4,7 +4,6 @@ from typing import List, Optional
 from app.database import get_db
 from app.services.terrain_service import TerrainService
 from app.schemas.terrain import TerrainCreate, TerrainUpdate, TerrainResponse
-from app.models.terrain import StatutTerrain
 from app.core.dependencies import get_current_user
 
 router = APIRouter(
@@ -28,11 +27,8 @@ async def create_terrain(
     Créer un nouveau terrain agricole.
     
     - **nom**: Nom du terrain (obligatoire)
-    - **type_terrain**: Type de terrain (agricole, pastoral, mixte, experimental)
+    - **description**: Description du terrain
     - **localite_id**: ID de la localité
-    - **superficie_totale**: Superficie en hectares
-    - **latitude**: Latitude GPS
-    - **longitude**: Longitude GPS
     """
     return TerrainService.create_terrain(db, terrain_data, str(current_user.id))
 
@@ -45,17 +41,16 @@ async def create_terrain(
 async def get_all_terrains(
     skip: int = Query(0, ge=0, description="Nombre d'éléments à ignorer"),
     limit: int = Query(100, ge=1, le=100, description="Nombre maximum d'éléments"),
-    statut: Optional[StatutTerrain] = Query(None, description="Filtrer par statut"),
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
     Récupérer tous les terrains de l'utilisateur connecté.
     
-    Possibilité de filtrer par statut et paginer les résultats.
+    Possibilité de paginer les résultats.
     """
     return TerrainService.get_all_terrains(
-        db, str(current_user.id), skip, limit, statut
+        db, str(current_user.id), skip, limit
     )
 
 
@@ -70,7 +65,7 @@ async def get_terrain_statistics(
     """
     Obtenir les statistiques des terrains de l'utilisateur.
     
-    Retourne le nombre de terrains et la superficie totale par statut.
+    Retourne le nombre total de terrains.
     """
     return TerrainService.get_terrain_statistics(db, str(current_user.id))
 

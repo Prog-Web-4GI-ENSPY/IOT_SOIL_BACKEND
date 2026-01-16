@@ -1,7 +1,7 @@
 import pytest
 from fastapi.testclient import TestClient
 from app.models.location import Localite, Continent, ClimateZone
-from app.models.terrain import Terrain, TypeTerrain, StatutTerrain
+from app.models.terrain import Terrain
 from app.models.parcelle import Parcelle
 
 
@@ -10,14 +10,10 @@ def test_localite(db):
     """Créer une localité de test"""
     localite = Localite(
         nom="Yaoundé",
-        latitude=3.8480,
-        longitude=11.5021,
         ville="Yaoundé",
         pays="Cameroun",
         continent=Continent.AFRIQUE,
-        timezone="Africa/Douala",
-        climate_zone=ClimateZone.TROPICAL,
-        superficie=10.0
+        climate_zone=ClimateZone.TROPICAL
     )
     db.add(localite)
     db.commit()
@@ -30,12 +26,8 @@ def test_terrain(db, test_user, test_localite):
     """Créer un terrain de test"""
     terrain = Terrain(
         nom="Terrain Test",
-        type_terrain=TypeTerrain.AGRICOLE,
-        statut=StatutTerrain.ACTIF,
+        description="Terrain pour les tests unitaires",
         localite_id=test_localite.id,
-        latitude=3.8500,
-        longitude=11.5030,
-        superficie_totale=10.5,
         user_id=test_user.id
     )
     db.add(terrain)

@@ -28,18 +28,12 @@ async def create_localite(
 
     **Champs requis :**
     - **nom**: Nom de la localité
-    - **latitude**: -90 à 90
-    - **longitude**: -180 à 180
     - **ville**: Nom de la ville
     - **pays**: Nom du pays
     - **continent**: Continent
-    - **timezone**: Fuseau horaire (ex: "Africa/Douala")
-    - **superficie**: Superficie en km²
 
     **Champs optionnels :**
-    - **altitude**: Altitude en mètres
-    - **quartier**, **region**, **code_postal**: Informations d'adresse
-    - **population**: Nombre d'habitants
+    - **region**: Nom de la région
     - **climate_zone**: Zone climatique
     """
     return LocaliteService.create_localite(db, localite_data, str(current_user.id))
@@ -93,7 +87,6 @@ async def get_localite_statistics(
     - Nombre total de localités
     - Répartition par continent
     - Répartition par zone climatique
-    - Superficie totale couverte
     """
     return LocaliteService.get_localite_statistics(db)
 
@@ -162,7 +155,6 @@ async def update_localite(
     Mettre à jour les informations d'une localité.
 
     Seuls les champs fournis seront mis à jour.
-    Les coordonnées GPS ne peuvent pas être modifiées après création.
     """
     return LocaliteService.update_localite(db, localite_id, localite_data)
 

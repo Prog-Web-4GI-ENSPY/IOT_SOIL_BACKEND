@@ -13,6 +13,7 @@ from fastapi import HTTPException, status
 from app.core.config import settings
 from app.models.user import User, UserRole
 from app.schemas.user import UserCreate
+from app.services.notification_service import NotificationService
 
 
 class AuthService:
@@ -113,7 +114,8 @@ class AuthService:
         self,
         db: Session,
         user_data: UserCreate,
-        role: UserRole = UserRole.USER
+        role: UserRole = UserRole.USER,
+        notify: bool = True
     ) -> User:
         """Enregistrer un nouvel utilisateur"""
         # Vérifier si l'email existe déjà
@@ -142,6 +144,14 @@ class AuthService:
         db.add(db_user)
         db.commit()
         db.refresh(db_user)
+        
+        # Notification optionnelle
+        if notify:
+            notif = NotificationService()
+            try:
+                notif.send_email(db_user.email, "Bienvenue sur AgroPredict", "Votre compte a été créé avec succès.")
+            except Exception:
+                pass
         
         return db_user
 

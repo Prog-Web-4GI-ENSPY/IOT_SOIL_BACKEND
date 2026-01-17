@@ -1,14 +1,13 @@
 from typing import Optional, List
-from pydantic import Field, AnyUrl, field_validator
+from pydantic import Field, AnyUrl
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from typing import Optional, List, Union
 
 class Settings(BaseSettings):
-    # Pydantic v2 configuration
     model_config = SettingsConfigDict(
         env_file='.env',
+        env_file_encoding='utf-8',
         case_sensitive=True,
-        
+        extra='ignore'  # Par défaut, ignore les champs supplémentaires
     )
     
     # --- Application ---
@@ -16,17 +15,15 @@ class Settings(BaseSettings):
     APP_VERSION: str = Field(default="1.0.0")
     DEBUG: bool = Field(default=False)
     API_V1_PREFIX: str = Field(default="/api/v1")
+    API_PREFIX: str = Field(default="/api/v1")  # Ajouté
     
-    # --- Database (Ajout des champs pour la construction de l'URL) ---
+    # --- Database ---
     POSTGRES_USER: Optional[str] = None
     POSTGRES_PASSWORD: Optional[str] = None
     POSTGRES_SERVER: Optional[str] = None
     POSTGRES_PORT: Optional[int] = None
     POSTGRES_DB: Optional[str] = None
-
-    # L'URL finale de la DB. Pydantic peut la valider si le type est AnyUrl.
-    # Elle sera lue depuis .env OU construite via la post-initialisation.
-    DATABASE_URL: Optional[Union[AnyUrl, str]] = None
+    DATABASE_URL: Optional[str] = None
     
     # --- Security ---
     SECRET_KEY: str
@@ -40,32 +37,42 @@ class Settings(BaseSettings):
     CHIRPSTACK_APPLICATION_ID: Optional[str] = None
 
     # --- AI Services ---
-    EXPERT_SYSTEM_URL: AnyUrl = Field(default="https://systeme-expert-5iyu.onrender.com")
-    ML_SERVICE_URL: AnyUrl = Field(default="https://crops-predictions.onrender.com")
+    EXPERT_SYSTEM_URL: str = Field(default="https://systeme-expert-5iyu.onrender.com")
+    ML_SERVICE_URL: str = Field(default="https://crops-predictions.onrender.com")
 
     # --- CORS ---
-    # Utilisez 'List' ou 'list' (avec Pydantic v2) pour les listes
-    BACKEND_CORS_ORIGINS: List[str] = Field(default=["http://localhost:3000","http://localhost:3001"])
+    BACKEND_CORS_ORIGINS: List[str] = Field(default=["http://localhost:3000", "http://localhost:3001"])
+    ALLOWED_ORIGINS: List[str] = Field(default=["http://localhost:3000"])  # Ajouté
 
+    # --- Twilio / SMS ---
+    TWILIO_ACCOUNT_SID: Optional[str] = None
+    TWILIO_AUTH_TOKEN: Optional[str] = None
+    TWILIO_PHONE_NUMBER: Optional[str] = None
+    TWILIO_VERIFY_SERVICE_SID: Optional[str] = None
+    SMS_PROVIDER: str = Field(default="twilio")
+    DEFAULT_SMS_SENDER: str = Field(default="MONAPP")
+    MAX_SMS_PER_DAY: int = Field(default=100)
+    
+    # --- Email ---
+    SMTP_HOST: Optional[str] = None
+    SMTP_PORT: Optional[int] = None
+    SMTP_USER: Optional[str] = None
+    SMTP_PASSWORD: Optional[str] = None
+    EMAILS_FROM_EMAIL: Optional[str] = None
+    
+    # --- Telegram ---
+    TELEGRAM_BOT_TOKEN: Optional[str] = None
+    TELEGRAM_CHAT_ID: Optional[str] = None
 
-    # --- Méthode de construction post-initialisation ---
     def model_post_init(self, __context: any) -> None:
-        """
-        Méthode appelée après l'initialisation du modèle.
-        Permet de construire DATABASE_URL si elle n'est pas fournie 
-        mais que les composants sont là.
-        """
+        """Construit DATABASE_URL si elle n'est pas fournie."""
         if self.DATABASE_URL is None and self.POSTGRES_USER and self.POSTGRES_DB:
-            # Construit l'URL à partir des composants
-            # Fallback sûr pour l'URL si elle n'est pas définie dans .env
-            self.DATABASE_URL = AnyUrl.build(
-                scheme="postgresql",
-                username=self.POSTGRES_USER,
-                password=self.POSTGRES_PASSWORD,
-                host=self.POSTGRES_SERVER or "localhost",
-                port=self.POSTGRES_PORT,
-                path=f"/{self.POSTGRES_DB}",
-            )
+            password = f":{self.POSTGRES_PASSWORD}" if self.POSTGRES_PASSWORD else ""
+            port = f":{self.POSTGRES_PORT}" if self.POSTGRES_PORT else ""
+            host = self.POSTGRES_SERVER or "localhost"
+            
+            self.DATABASE_URL = f"postgresql://{self.POSTGRES_USER}{password}@{host}{port}/{self.POSTGRES_DB}"
 
 
+# Juste cette ligne, RIEN après
 settings = Settings()

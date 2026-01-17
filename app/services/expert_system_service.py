@@ -3,7 +3,8 @@ import logging
 from fastapi import HTTPException, status
 from typing import List, Optional
 from app.core.config import settings
-from app.schemas.ai_integration import  ExpertSystemResponse
+from app.schemas.ai_integration import ExpertSystemResponse
+from app.services.notification_service import NotificationService
 
 logger = logging.getLogger(__name__)
 
@@ -14,7 +15,7 @@ class ExpertSystemService:
     QUERY_ENDPOINT = f"{BASE_URL}/api/query"
 
     @staticmethod
-    async def query_expert_system(query: str, region: str = "Centre") -> Optional[ExpertSystemResponse]:
+    async def query_expert_system(query: str, region: str = "Centre", notify: bool = False, user_email: str = None) -> Optional[ExpertSystemResponse]:
         """
         Interroge le système expert pour obtenir des conseils sur une culture spécifique
         """
@@ -38,7 +39,12 @@ class ExpertSystemService:
                     return None
                 
                 data = response.json()
-                return ExpertSystemResponse(**data)
+                result = ExpertSystemResponse(**data)
+                # Notification optionnelle
+                if notify and user_email:
+                    notif = NotificationService()
+                    await notif.send_email(user_email, "Réponse Système Expert", f"{result.final_response}")
+                return result
                 
             except httpx.RequestError as e:
                 logger.error(f"Erreur de connexion au SE: {str(e)}")

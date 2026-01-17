@@ -490,6 +490,19 @@ def test_register():
     assert data["email"] == "leonel@example.com"
     assert "id" in data
 ```
+
+---
+
+### Intégration notifications dans les services métier
+
+- **MLService** : notification email optionnelle lors d'une prédiction
+- **ExpertSystemService** : notification email optionnelle lors d'une réponse
+- **AuthService** : notification email automatique à l'inscription
+
+Pour personnaliser ou étendre (WhatsApp, SMS, Telegram), utilisez les méthodes de `NotificationService` dans vos services métier.
+
+---
+
 ## 🚀 Déploiement
 
 ### Docker

@@ -29,8 +29,6 @@ async def create_parcelle(
     - **nom**: Nom de la parcelle (obligatoire)
     - **terrain_id**: ID du terrain parent (obligatoire)
     - **superficie**: Superficie en hectares (obligatoire)
-    - **type_sol**: Type de sol
-    - **systeme_irrigation**: Système d'irrigation utilisé
 
     La superficie totale des parcelles ne peut pas dépasser celle du terrain.
     Un code unique sera automatiquement généré si non fourni.
@@ -85,7 +83,7 @@ async def get_parcelle_statistics(
     """
     Obtenir les statistiques des parcelles d'un terrain.
     
-    Retourne le nombre de parcelles et la superficie totale par statut.
+    Retourne le nombre de parcelles et la superficie totale.
     """
     return ParcelleService.get_parcelle_statistics(db, terrain_id, str(current_user.id))
 
@@ -121,7 +119,6 @@ async def update_parcelle(
     Mettre à jour les informations d'une parcelle.
     
     Seuls les champs fournis seront mis à jour.
-    Si la culture actuelle est modifiée, l'ancienne culture sera archivée.
     """
     return ParcelleService.update_parcelle(
         db, parcelle_id, parcelle_data, str(current_user.id)

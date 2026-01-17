@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, DateTime, Enum as SQLEnum, JSON
+from sqlalchemy import Column, String, DateTime, Enum as SQLEnum
 from sqlalchemy.orm import relationship
 from datetime import datetime
 import enum
@@ -18,8 +18,6 @@ class UserStatus(str, enum.Enum):
     PENDING = "pending"
 
 
-
-
 class User(BaseModel):
     __tablename__ = "users"
 
@@ -33,7 +31,6 @@ class User(BaseModel):
     avatar = Column(String(500))
     date_inscription = Column(DateTime, default=datetime.utcnow, nullable=False)
     dernier_acces = Column(DateTime)
-    preferences = Column(JSON)  # Stocke UserPreferences en JSON
     
 
     # Relations

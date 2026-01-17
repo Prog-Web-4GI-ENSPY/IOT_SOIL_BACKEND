@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from typing import List, Optional
 from fastapi import HTTPException, status
-from app.models.parcelle import Parcelle, StatutParcelle, HistoriqueCulture
+from app.models.parcelle import Parcelle, HistoriqueCulture
 from app.schemas.parcelle import ParcelleCreate, ParcelleUpdate
 import uuid
 from datetime import datetime
@@ -62,18 +62,6 @@ class ParcelleService:
                 detail="Terrain non trouvé ou accès refusé"
             )
         
-        # Vérifier que la superficie de la parcelle ne dépasse pas celle du terrain
-        superficie_parcelles = db.query(func.sum(Parcelle.superficie)).filter(
-            Parcelle.terrain_id == parcelle_data.terrain_id,
-            Parcelle.deleted_at.is_(None)
-        ).scalar() or 0
-        
-        if superficie_parcelles + parcelle_data.superficie > terrain.superficie_totale:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="La superficie totale des parcelles dépasse celle du terrain"
-            )
-        
         try:
             code = parcelle_data.code or ParcelleService.generate_code(db, parcelle_data.terrain_id)
             
@@ -83,10 +71,7 @@ class ParcelleService:
                 code=code,
                 description=parcelle_data.description,
                 terrain_id=parcelle_data.terrain_id,
-                superficie=parcelle_data.superficie,
-                type_sol=parcelle_data.type_sol or "Non spécifié",
-                systeme_irrigation=parcelle_data.systeme_irrigation,
-                source_eau=parcelle_data.source_eau
+                superficie=parcelle_data.superficie
             )
             
             db.add(parcelle)
@@ -148,6 +133,17 @@ class ParcelleService:
             Parcelle.terrain_id == terrain_id,
             Parcelle.deleted_at.is_(None)
         ).offset(skip).limit(limit).all()
+
+    @staticmethod
+    def get_all_parcelles_admin(
+        db: Session,
+        skip: int = 0,
+        limit: int = 100
+    ) -> List[Parcelle]:
+        """Récupérer toutes les parcelles du système (Admin uniquement)"""
+        return db.query(Parcelle).filter(
+            Parcelle.deleted_at.is_(None)
+        ).offset(skip).limit(limit).all()
     
     @staticmethod
     def update_parcelle(
@@ -160,11 +156,6 @@ class ParcelleService:
         parcelle = ParcelleService.get_parcelle_by_id(db, parcelle_id, user_id)
         
         update_data = parcelle_data.dict(exclude_unset=True)
-        
-        # Si on met à jour la culture, enregistrer dans l'historique
-        if 'culture_actuelle_id' in update_data and update_data['culture_actuelle_id']:
-            if parcelle.culture_actuelle_id and parcelle.culture_actuelle_id != update_data['culture_actuelle_id']:
-                ParcelleService.archive_culture(db, parcelle)
         
         for field, value in update_data.items():
             setattr(parcelle, field, value)
@@ -199,19 +190,9 @@ class ParcelleService:
     @staticmethod
     def archive_culture(db: Session, parcelle: Parcelle) -> HistoriqueCulture:
         """Archiver la culture actuelle dans l'historique"""
-        if not parcelle.culture_actuelle_id:
-            return None
-        
-        historique = HistoriqueCulture(
-            id=str(uuid.uuid4()),
-            parcelle_id=parcelle.id,
-            culture_id=parcelle.culture_actuelle_id,
-            date_plantation=parcelle.date_plantation or datetime.utcnow(),
-            date_recolte=datetime.utcnow()
-        )
-        
-        db.add(historique)
-        return historique
+        # FIX: Cette méthode est conservée pour la compatibilité mais ne fait plus rien 
+        # car les champs culture_actuelle_id et date_plantation ont été supprimés de Parcelle.
+        return None
     
     @staticmethod
     def get_historique_cultures(
@@ -246,21 +227,14 @@ class ParcelleService:
         
         stats = db.query(
             func.count(Parcelle.id).label('total'),
-            func.sum(Parcelle.superficie).label('superficie_totale'),
-            Parcelle.statut
+            func.sum(Parcelle.superficie).label('superficie_totale')
         ).filter(
             Parcelle.terrain_id == terrain_id,
             Parcelle.deleted_at.is_(None)
-        ).group_by(Parcelle.statut).all()
+        ).first()
         
         return {
             "terrain_id": terrain_id,
-            "statistiques": [
-                {
-                    "statut": stat.statut,
-                    "nombre": stat.total,
-                    "superficie": float(stat.superficie_totale or 0)
-                }
-                for stat in stats
-            ]
+            "total_parcelles": stats.total or 0,
+            "superficie_totale": float(stats.superficie_totale or 0)
         }

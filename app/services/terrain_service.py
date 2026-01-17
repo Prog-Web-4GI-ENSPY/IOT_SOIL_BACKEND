@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from typing import List, Optional
 from fastapi import HTTPException, status
-from app.models.terrain import Terrain, StatutTerrain
+from app.models.terrain import Terrain
 from app.schemas.terrain import TerrainCreate, TerrainUpdate
 import uuid
 
@@ -18,14 +18,7 @@ class TerrainService:
                 id=str(uuid.uuid4()),
                 nom=terrain_data.nom,
                 description=terrain_data.description,
-                type_terrain=terrain_data.type_terrain,
                 localite_id=terrain_data.localite_id,
-                latitude=terrain_data.latitude,
-                longitude=terrain_data.longitude,
-                superficie_totale=terrain_data.superficie_totale,
-                perimetre=terrain_data.perimetre,
-                pente=terrain_data.pente,
-                date_acquisition=terrain_data.date_acquisition,
                 user_id=user_id
             )
             
@@ -63,8 +56,7 @@ class TerrainService:
         db: Session, 
         user_id: str, 
         skip: int = 0, 
-        limit: int = 100,
-        statut: Optional[StatutTerrain] = None
+        limit: int = 100
     ) -> List[Terrain]:
         """Récupérer tous les terrains d'un utilisateur"""
         query = db.query(Terrain).filter(
@@ -72,10 +64,18 @@ class TerrainService:
             Terrain.deleted_at.is_(None)
         )
         
-        if statut:
-            query = query.filter(Terrain.statut == statut)
-        
         return query.offset(skip).limit(limit).all()
+
+    @staticmethod
+    def get_all_terrains_admin(
+        db: Session,
+        skip: int = 0,
+        limit: int = 100
+    ) -> List[Terrain]:
+        """Récupérer tous les terrains du système (Admin uniquement)"""
+        return db.query(Terrain).filter(
+            Terrain.deleted_at.is_(None)
+        ).offset(skip).limit(limit).all()
     
     @staticmethod
     def update_terrain(
@@ -121,22 +121,11 @@ class TerrainService:
     @staticmethod
     def get_terrain_statistics(db: Session, user_id: str) -> dict:
         """Obtenir les statistiques des terrains"""
-        stats = db.query(
-            func.count(Terrain.id).label('total'),
-            func.sum(Terrain.superficie_totale).label('superficie_totale'),
-            Terrain.statut
-        ).filter(
+        total = db.query(func.count(Terrain.id)).filter(
             Terrain.user_id == user_id,
             Terrain.deleted_at.is_(None)
-        ).group_by(Terrain.statut).all()
+        ).scalar()
         
         return {
-            "statistiques": [
-                {
-                    "statut": stat.statut,
-                    "nombre": stat.total,
-                    "superficie": float(stat.superficie_totale or 0)
-                }
-                for stat in stats
-            ]
+            "total_terrains": total or 0
         }

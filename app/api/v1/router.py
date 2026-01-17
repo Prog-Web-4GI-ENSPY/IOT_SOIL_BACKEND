@@ -6,7 +6,8 @@ from app.api.v1 import (
     recommendation_router,
     location_router,
     sensor_data_router,
-    chirpstack_router
+    chirpstack_router,
+    admin_router
 )
 from app.routers import auth_router, users_router
 
@@ -29,6 +30,12 @@ api_router.include_router(
     users_router.router,
     prefix="/users",
     tags=["Users"]
+)
+
+# Admin management endpoints
+api_router.include_router(
+    admin_router.router,
+    tags=["Administration"]
 )
 
 # ============================================================================

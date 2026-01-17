@@ -1,8 +1,8 @@
 import pytest
 from fastapi.testclient import TestClient
 from app.models.location import Localite, Continent, ClimateZone
-from app.models.terrain import Terrain, TypeTerrain, StatutTerrain
-from app.models.parcelle import Parcelle, TypeSol, StatutParcelle
+from app.models.terrain import Terrain
+from app.models.parcelle import Parcelle
 
 
 @pytest.fixture
@@ -10,12 +10,9 @@ def test_localite(db):
     """Créer une localité de test"""
     localite = Localite(
         nom="Yaoundé",
-        latitude=3.8480,
-        longitude=11.5021,
         ville="Yaoundé",
         pays="Cameroun",
         continent=Continent.AFRIQUE,
-        timezone="Africa/Douala",
         climate_zone=ClimateZone.TROPICAL
     )
     db.add(localite)
@@ -29,12 +26,8 @@ def test_terrain(db, test_user, test_localite):
     """Créer un terrain de test"""
     terrain = Terrain(
         nom="Terrain Test",
-        type_terrain=TypeTerrain.AGRICOLE,
-        statut=StatutTerrain.ACTIF,
+        description="Terrain pour les tests unitaires",
         localite_id=test_localite.id,
-        latitude=3.8500,
-        longitude=11.5030,
-        superficie_totale=10.5,
         user_id=test_user.id
     )
     db.add(terrain)
@@ -50,17 +43,7 @@ def test_parcelle(db, test_terrain):
         nom="Parcelle Test",
         code="TEST-001",
         terrain_id=test_terrain.id,
-        superficie=2.5,
-        polygone=[
-            {"latitude": 3.8500, "longitude": 11.5030},
-            {"latitude": 3.8510, "longitude": 11.5030},
-            {"latitude": 3.8510, "longitude": 11.5040},
-            {"latitude": 3.8500, "longitude": 11.5040}
-        ],
-        centroid_lat=3.8505,
-        centroid_lng=11.5035,
-        type_sol=TypeSol.ARGILEUX,
-        statut=StatutParcelle.ACTIVE
+        superficie=2.5
     )
     db.add(parcelle)
     db.commit()

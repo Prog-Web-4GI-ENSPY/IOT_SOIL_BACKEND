@@ -9,7 +9,7 @@ from app.core.dependencies import (
     require_admin,
     get_current_user
 )
-from app.models.user import User, UserStatus, UserRole
+from app.models.user import User, UserRole
 
 router = APIRouter()
 
@@ -19,13 +19,7 @@ def get_my_profile(
     current_user: User = Depends(get_current_active_user)
 ):
     """
-    R�cup�re le profil de l'utilisateur connecte
-
-    Args:
-        current_user: L'utilisateur actuel
-
-    Returns:
-        UserResponse: Profil de l'utilisateur
+    Recupere le profil de l'utilisateur connecte
     """
     return current_user
 
@@ -37,15 +31,7 @@ def update_my_profile(
     db: Session = Depends(get_db)
 ):
     """
-    Met � jour le profil de l'utilisateur connect�
-
-    Args:
-        user_data: Donn�es de mise � jour
-        current_user: L'utilisateur actuel
-        db: Session de base de donn�es
-
-    Returns:
-        UserResponse: Profil mis � jour
+    Met a jour le profil de l'utilisateur connecte
     """
     return UserService.update_user(db, str(current_user.id), user_data)
 
@@ -54,26 +40,14 @@ def update_my_profile(
 def get_all_users(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=100),
-    status: Optional[UserStatus] = None,
     role: Optional[UserRole] = None,
     current_user: User = Depends(require_admin),
     db: Session = Depends(get_db)
 ):
     """
-    R�cup�re tous les utilisateurs (Admin uniquement)
-
-    Args:
-        skip: Nombre d'utilisateurs � sauter
-        limit: Nombre maximum d'utilisateurs � retourner
-        status: Filtre par statut
-        role: Filtre par r�le
-        current_user: L'utilisateur actuel (doit �tre admin)
-        db: Session de base de donn�es
-
-    Returns:
-        List[UserResponse]: Liste des utilisateurs
+    Recupere tous les utilisateurs (Admin uniquement)
     """
-    return UserService.get_all_users(db, skip, limit, status, role)
+    return UserService.get_all_users(db, skip, limit, role)
 
 
 @router.get("/{user_id}", response_model=UserResponse)
@@ -83,18 +57,7 @@ def get_user_by_id(
     db: Session = Depends(get_db)
 ):
     """
-    R�cup�re un utilisateur par son ID (Admin uniquement)
-
-    Args:
-        user_id: ID de l'utilisateur
-        current_user: L'utilisateur actuel (doit �tre admin)
-        db: Session de base de donn�es
-
-    Returns:
-        UserResponse: L'utilisateur
-
-    Raises:
-        HTTPException: Si l'utilisateur n'existe pas
+    Recupere un utilisateur par son ID (Admin uniquement)
     """
     user = UserService.get_user_by_id(db, user_id)
     if not user:
@@ -113,16 +76,7 @@ def update_user(
     db: Session = Depends(get_db)
 ):
     """
-    Met � jour un utilisateur (Admin uniquement)
-
-    Args:
-        user_id: ID de l'utilisateur
-        user_data: Donn�es de mise � jour
-        current_user: L'utilisateur actuel (doit �tre admin)
-        db: Session de base de donn�es
-
-    Returns:
-        UserResponse: Utilisateur mis � jour
+    Met a jour un utilisateur (Admin uniquement)
     """
     return UserService.update_user(db, user_id, user_data)
 
@@ -135,17 +89,6 @@ def delete_user(
 ):
     """
     Supprime un utilisateur (Admin uniquement)
-
-    Args:
-        user_id: ID de l'utilisateur
-        current_user: L'utilisateur actuel (doit �tre admin)
-        db: Session de base de donn�es
-
-    Returns:
-        Statut 204 No Content
-
-    Raises:
-        HTTPException: Si l'utilisateur tente de se supprimer lui-m�me
     """
     if str(current_user.id) == user_id:
         raise HTTPException(
@@ -155,83 +98,3 @@ def delete_user(
 
     UserService.delete_user(db, user_id)
     return None
-
-
-@router.patch("/{user_id}/status", response_model=UserResponse)
-def change_user_status(
-    user_id: str,
-    new_status: UserStatus,
-    current_user: User = Depends(require_admin),
-    db: Session = Depends(get_db)
-):
-    """
-    Change le statut d'un utilisateur (Admin uniquement)
-
-    Args:
-        user_id: ID de l'utilisateur
-        new_status: Nouveau statut
-        current_user: L'utilisateur actuel (doit �tre admin)
-        db: Session de base de donn�es
-
-    Returns:
-        UserResponse: Utilisateur avec le statut mis � jour
-
-    Raises:
-        HTTPException: Si l'utilisateur tente de changer son propre statut
-    """
-    if str(current_user.id) == user_id:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Cannot change your own status"
-        )
-
-    return UserService.change_user_status(db, user_id, new_status)
-
-
-@router.patch("/{user_id}/activate", response_model=UserResponse)
-def activate_user(
-    user_id: str,
-    current_user: User = Depends(require_admin),
-    db: Session = Depends(get_db)
-):
-    """
-    Active un utilisateur (Admin uniquement)
-
-    Args:
-        user_id: ID de l'utilisateur
-        current_user: L'utilisateur actuel (doit �tre admin)
-        db: Session de base de donn�es
-
-    Returns:
-        UserResponse: Utilisateur activ�
-    """
-    return UserService.change_user_status(db, user_id, UserStatus.ACTIVE)
-
-
-@router.patch("/{user_id}/suspend", response_model=UserResponse)
-def suspend_user(
-    user_id: str,
-    current_user: User = Depends(require_admin),
-    db: Session = Depends(get_db)
-):
-    """
-    Suspend un utilisateur (Admin uniquement)
-
-    Args:
-        user_id: ID de l'utilisateur
-        current_user: L'utilisateur actuel (doit �tre admin)
-        db: Session de base de donn�es
-
-    Returns:
-        UserResponse: Utilisateur suspendu
-
-    Raises:
-        HTTPException: Si l'utilisateur tente de se suspendre lui-m�me
-    """
-    if str(current_user.id) == user_id:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Cannot suspend your own account"
-        )
-
-    return UserService.change_user_status(db, user_id, UserStatus.SUSPENDED)

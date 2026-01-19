@@ -223,6 +223,7 @@ class CapteurService:
         threshold_time = datetime.utcnow() - timedelta(minutes=minutes_threshold)
         
         return db.query(Capteur).filter(
+            Capteur.deleted_at.is_(None),
             or_(
                 Capteur.last_seen < threshold_time,
                 Capteur.last_seen.is_(None)
@@ -236,6 +237,7 @@ class CapteurService:
     ) -> List[Capteur]:
         """Récupérer les capteurs avec batterie faible"""
         return db.query(Capteur).filter(
+            Capteur.deleted_at.is_(None),
             Capteur.battery_level < threshold
         ).all()
     
@@ -245,7 +247,7 @@ class CapteurService:
         user_id: Optional[str] = None
     ) -> Dict[str, Any]:
         """Obtenir les statistiques des capteurs"""
-        query = db.query(Capteur)
+        query = db.query(Capteur).filter(Capteur.deleted_at.is_(None))
         
         if user_id:
             from app.models.terrain import Terrain

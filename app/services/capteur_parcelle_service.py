@@ -7,12 +7,18 @@ from fastapi import HTTPException, status
 
 def assign_capteur_to_parcelle(db: Session, code_parcelle: str, code_capteur: str):
     # Rechercher la parcelle
-    parcelle = db.query(Parcelle).filter(Parcelle.code == code_parcelle).first()
+    parcelle = db.query(Parcelle).filter(
+        Parcelle.code == code_parcelle,
+        Parcelle.deleted_at.is_(None)
+    ).first()
     if not parcelle:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Parcelle avec le code {code_parcelle} non trouvée")
 
     # Rechercher le capteur
-    capteur = db.query(Capteur).filter(Capteur.code == code_capteur).first()
+    capteur = db.query(Capteur).filter(
+        Capteur.code == code_capteur,
+        Capteur.deleted_at.is_(None)
+    ).first()
     if not capteur:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Capteur avec le code {code_capteur} non trouvé")
 
@@ -43,12 +49,18 @@ def assign_capteur_to_parcelle(db: Session, code_parcelle: str, code_capteur: st
 
 def desassign_capteur_de_parcelle(db: Session, code_parcelle: str, code_capteur: str):
     # Rechercher la parcelle
-    parcelle = db.query(Parcelle).filter(Parcelle.code == code_parcelle).first()
+    parcelle = db.query(Parcelle).filter(
+        Parcelle.code == code_parcelle,
+        Parcelle.deleted_at.is_(None)
+    ).first()
     if not parcelle:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Parcelle avec le code {code_parcelle} non trouvée")
 
     # Rechercher le capteur
-    capteur = db.query(Capteur).filter(Capteur.code == code_capteur).first()
+    capteur = db.query(Capteur).filter(
+        Capteur.code == code_capteur,
+        Capteur.deleted_at.is_(None)
+    ).first()
     if not capteur:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Capteur avec le code {code_capteur} non trouvé")
 

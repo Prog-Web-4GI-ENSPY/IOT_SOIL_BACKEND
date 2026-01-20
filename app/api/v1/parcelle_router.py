@@ -37,6 +37,23 @@ async def create_parcelle(
 
 
 @router.get(
+    "/",
+    response_model=List[ParcelleResponse],
+    summary="Lister toutes les parcelles"
+)
+async def get_all_parcelles(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=1000),
+    current_user: dict = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Récupérer la liste de toutes les parcelles.
+    """
+    return ParcelleService.get_all_parcelles_admin(db, skip=skip, limit=limit)
+
+
+@router.get(
     "/terrain/{terrain_id}",
     response_model=List[ParcelleResponse],
     summary="Récupérer les parcelles d'un terrain"

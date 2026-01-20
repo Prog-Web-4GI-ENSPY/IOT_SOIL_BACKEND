@@ -80,3 +80,8 @@ def desassign_capteur_de_parcelle(db: Session, code_parcelle: str, code_capteur:
     db.refresh(assignment)
     
     return assignment
+
+def get_all_assignments(db: Session, skip: int = 0, limit: int = 100):
+    return db.query(CapParcelle).filter(
+        CapParcelle.date_desassignation == None
+    ).offset(skip).limit(limit).all()

@@ -5,6 +5,7 @@ from app.database import get_db
 
 # Importez les schémas, le service et le modèle
 from app.schemas.capteur import Capteur as CapteurSchema, CapteurCreate, CapteurUpdate
+from app.schemas.cap_parcelle import CapParcelle as CapParcelleSchema
 from app.services.capteur_service import capteur_service
 from app.services.capteur_parcelle_service import assign_capteur_to_parcelle, desassign_capteur_de_parcelle
 from app.models.capteur import Capteur
@@ -159,6 +160,7 @@ def read_capteur_by_code(
 
 @router.post(
     "/assign",
+    response_model=CapParcelleSchema,
     summary="Assigner un capteur à une parcelle"
 )
 def assign_capteur(
@@ -174,6 +176,7 @@ def assign_capteur(
 
 @router.post(
     "/desassign",
+    response_model=CapParcelleSchema,
     summary="Désassigner un capteur d'une parcelle"
 )
 def desassign_capteur(
@@ -186,3 +189,20 @@ def desassign_capteur(
     Désassigne un capteur d'une parcelle. Accessible à tous les utilisateurs connectés.
     """
     return desassign_capteur_de_parcelle(db, code_parcelle, code_capteur)
+
+@router.get(
+    "/assignments/all",
+    response_model=List[CapParcelleSchema],
+    summary="Lister toutes les assignations actives"
+)
+def get_assignments(
+    skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user)
+) -> Any:
+    """
+    Récupère la liste de toutes les assignations actives entre capteurs et parcelles.
+    """
+    from app.services.capteur_parcelle_service import get_all_assignments
+    return get_all_assignments(db, skip=skip, limit=limit)

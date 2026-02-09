@@ -35,6 +35,11 @@ class Settings(BaseSettings):
     CHIRPSTACK_API_URL: Optional[str] = None
     CHIRPSTACK_API_TOKEN: Optional[str] = None
     CHIRPSTACK_APPLICATION_ID: Optional[str] = None
+    
+    # --- Infobip ---
+    INFOBIP_BASE_URL: str = Field(default="https://api.infobip.com")
+    INFOBIP_API_KEY: Optional[str] = None
+    INFOBIP_SENDER_NUMBER: Optional[str] = None
 
     # --- AI Services ---
     EXPERT_SYSTEM_URL: str = Field(default="https://systeme-expert-5iyu.onrender.com")

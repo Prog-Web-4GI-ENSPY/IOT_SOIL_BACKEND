@@ -1,44 +1,52 @@
-from infobip.api.client import InfobipClient
+import httpx
 from app.core.config import settings
 import logging
 
 logger = logging.getLogger(__name__)
 
 class InfobipService:
-    """Service Infobip pour SMS et WhatsApp - Remplace Twilio 1:1"""
+    """Service Infobip pour SMS et WhatsApp - Utilise httpx directement"""
     
     def __init__(self):
         # Configuration Infobip
-        configuration = {
-            'base_url': settings.INFOBIP_BASE_URL,
-            'api_key': settings.INFOBIP_API_KEY
-        }
-        self.client = InfobipClient(configuration)
+        self.base_url = settings.INFOBIP_BASE_URL.rstrip('/')
+        self.api_key = settings.INFOBIP_API_KEY
         self.sender_number = settings.INFOBIP_SENDER_NUMBER
+        self.headers = {
+            "Authorization": f"App {self.api_key}",
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+        }
 
     async def send_sms(self, to: str, message: str, sender: str = None) -> dict:
-        """Identique à Twilio.send_sms()"""
+        """Envoi de SMS via Infobip API"""
         try:
             from_number = sender or self.sender_number
-            sms_request = {
+            url = f"{self.base_url}/sms/2/text/advanced"
+            
+            payload = {
                 "messages": [{
                     "destinations": [{"to": to}],
                     "from": from_number,
-                    "textMessage": {"text": message}
+                    "text": message
                 }]
             }
             
-            response = self.client.sms.sms_text_message.send_multiple_sms(sms_request)
+            async with httpx.AsyncClient() as client:
+                response = await client.post(url, headers=self.headers, json=payload, timeout=30.0)
+                response.raise_for_status()
+                data = response.json()
             
-            # Premier message ID (comme Twilio.sid)
-            message_id = response.messages[0].message_id if response.messages else None
-            status = response.messages[0].status.name if response.messages else "unknown"
+            # Extraction des informations de réponse
+            msg_data = data.get("messages", [{}])[0]
+            message_id = msg_data.get("messageId")
+            status_name = msg_data.get("status", {}).get("name", "unknown")
             
             logger.info(f"SMS envoyé Infobip: {message_id} à {to}")
             return {
                 "success": True,
                 "message_id": message_id,
-                "status": status,
+                "status": status_name,
                 "to": to,
                 "from": from_number
             }
@@ -47,30 +55,36 @@ class InfobipService:
             return {"success": False, "error": str(e)}
 
     async def send_whatsapp(self, to: str, message: str) -> dict:
-        """Identique à Twilio.send_whatsapp()"""
+        """Envoi de message WhatsApp via Infobip API"""
         try:
+            url = f"{self.base_url}/whatsapp/1/message/text"
+            
             # Format Infobip WhatsApp
-            whatsapp_request = {
-                "messages": [{
-                    "from": self.sender_number,
-                    "to": to,
-                    "messageId": f"wa-{hash(message)}",
-                    "content": {"text": message}
-                }]
+            payload = {
+                "from": self.sender_number,
+                "to": to,
+                "content": {"text": message}
             }
             
-            response = self.client.whatsapp.whatsapp_text_message.send_whatsapp_message(whatsapp_request)
+            async with httpx.AsyncClient() as client:
+                response = await client.post(url, headers=self.headers, json=payload, timeout=30.0)
+                response.raise_for_status()
+                data = response.json()
             
-            message_id = response.messages[0].message_id if response.messages else None
-            status = response.messages[0].status.name if response.messages else "unknown"
+            # Extraction des informations de réponse
+            message_id = data.get("messageId")
+            status_name = data.get("status", {}).get("name", "PENDING")
             
             logger.info(f"WhatsApp Infobip: {message_id} à {to}")
             return {
                 "success": True,
                 "message_id": message_id,
-                "status": status,
+                "status": status_name,
                 "to": to
             }
         except Exception as e:
             logger.error(f"Erreur WhatsApp Infobip: {e}")
             return {"success": False, "error": str(e)}
+
+# Instance globale
+infobip_service = InfobipService()

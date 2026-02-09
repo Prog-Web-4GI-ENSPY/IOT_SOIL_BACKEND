@@ -8,7 +8,7 @@ class InfobipService:
     """Service Infobip pour SMS et WhatsApp - Utilise httpx directement"""
     
     def __init__(self):
-        # Configuration Infobip
+        # Configuration Infobip :
         self.base_url = settings.INFOBIP_BASE_URL.rstrip('/')
         self.api_key = settings.INFOBIP_API_KEY
         self.sender_number = settings.INFOBIP_SENDER_NUMBER

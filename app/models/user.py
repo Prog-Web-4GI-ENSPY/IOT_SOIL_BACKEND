@@ -25,6 +25,13 @@ class NotificationMode(str, enum.Enum):
     TELEGRAM = "telegram"
 
 
+class RecommendationFrequency(str, enum.Enum):
+    WEEKLY = "weekly"
+    MONTHLY = "monthly"
+    QUARTERLY = "quarterly"
+    DISABLED = "disabled"
+
+
 class User(BaseModel):
     __tablename__ = "users"
 
@@ -37,6 +44,7 @@ class User(BaseModel):
     status = Column(SQLEnum(UserStatus), default=UserStatus.ACTIVE, nullable=False)
     avatar = Column(String(500))
     notification_modes = Column(JSON, default=list, nullable=False)  # ["email", "sms", "telegram"]
+    recommendation_frequency = Column(SQLEnum(RecommendationFrequency), default=RecommendationFrequency.WEEKLY, nullable=False)
     date_inscription = Column(DateTime, default=datetime.utcnow, nullable=False)
     dernier_acces = Column(DateTime)
     

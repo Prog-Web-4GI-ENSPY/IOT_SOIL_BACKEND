@@ -27,6 +27,14 @@ app.add_middleware(
 app.include_router(api_router, prefix=settings.API_V1_PREFIX)
 
 
+@app.on_event("startup")
+async def startup_event():
+    import asyncio
+    from app.services.scheduler_service import scheduler_service
+    # Lancer le scheduler dans une tâche de fond
+    asyncio.create_task(scheduler_service.start())
+
+
 @app.get("/")
 async def root():
     return {

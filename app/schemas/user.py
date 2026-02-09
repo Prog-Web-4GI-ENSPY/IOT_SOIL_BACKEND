@@ -16,12 +16,20 @@ class NotificationMode(str, Enum):
     TELEGRAM = "telegram"
 
 
+class RecommendationFrequency(str, Enum):
+    WEEKLY = "weekly"
+    MONTHLY = "monthly"
+    QUARTERLY = "quarterly"
+    DISABLED = "disabled"
+
+
 class UserBase(BaseModel):
     nom: str = Field(..., min_length=2, max_length=100)
     prenom: str = Field(..., min_length=2, max_length=100)
     email: EmailStr
     telephone: Optional[str] = Field(None, max_length=20)
     notification_modes: List[NotificationMode] = Field(default_factory=lambda: [NotificationMode.EMAIL])
+    recommendation_frequency: RecommendationFrequency = RecommendationFrequency.WEEKLY
 
 
 class UserCreate(UserBase):
@@ -44,6 +52,7 @@ class UserUpdate(BaseModel):
     telephone: Optional[str] = None
     avatar: Optional[str] = None
     notification_modes: Optional[List[NotificationMode]] = None
+    recommendation_frequency: Optional[RecommendationFrequency] = None
 
 
 class UserResponse(BaseModel):
@@ -55,6 +64,7 @@ class UserResponse(BaseModel):
     role: UserRole
     avatar: Optional[str] = None
     notification_modes: List[NotificationMode] = []
+    recommendation_frequency: RecommendationFrequency
     date_inscription: datetime
     dernier_acces: Optional[datetime] = None
     created_at: datetime

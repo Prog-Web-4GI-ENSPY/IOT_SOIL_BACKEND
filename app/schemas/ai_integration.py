@@ -53,6 +53,7 @@ class UnifiedRecommendationResponse(BaseModel):
     recommended_crop: str
     confidence_score: float
     justification: str
+    detailed_justifications: Optional[Dict[str, str]] = None
     ml_details: MLPredictResponse
     expert_details: Optional[ExpertSystemResponse] = None
     generated_at: str

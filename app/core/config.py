@@ -41,38 +41,24 @@ class Settings(BaseSettings):
     ML_SERVICE_URL: str = Field(default="https://crops-predictions.onrender.com")
 
     # --- CORS ---
-    BACKEND_CORS_ORIGINS: List[str] = Field(default=["http://localhost:3000", "http://localhost:3001"])
-    ALLOWED_ORIGINS: List[str] = Field(default=["http://localhost:3000"])  # Ajouté
+    # Utilisez 'List' ou 'list' (avec Pydantic v2) pour les listes
+    BACKEND_CORS_ORIGINS: List[str] = Field(default=["https://smart-agro-three.vercel.app","https://administrative-part-of-smart-agri-i.vercel.app","http://localhost:3000","http://localhost:3001"])
 
-    # --- Twilio / SMS ---
-    TWILIO_ACCOUNT_SID: Optional[str] = None
-    TWILIO_AUTH_TOKEN: Optional[str] = None
-    TWILIO_PHONE_NUMBER: Optional[str] = None
-    TWILIO_VERIFY_SERVICE_SID: Optional[str] = None
-    SMS_PROVIDER: str = Field(default="twilio")
-    DEFAULT_SMS_SENDER: str = Field(default="MONAPP")
-    MAX_SMS_PER_DAY: int = Field(default=100)
-    
-    # --- Email ---
-    SMTP_HOST: Optional[str] = None
-    SMTP_PORT: Optional[int] = None
-    SMTP_USER: Optional[str] = None
-    SMTP_PASSWORD: Optional[str] = None
-    EMAILS_FROM_EMAIL: Optional[str] = None
-    
-    # --- Telegram ---
-    TELEGRAM_BOT_TOKEN: Optional[str] = None
-    TELEGRAM_CHAT_ID: Optional[str] = None
 
+    # --- Méthode de construction post-initialisation ---
     def model_post_init(self, __context: any) -> None:
         """Construit DATABASE_URL si elle n'est pas fournie."""
         if self.DATABASE_URL is None and self.POSTGRES_USER and self.POSTGRES_DB:
-            password = f":{self.POSTGRES_PASSWORD}" if self.POSTGRES_PASSWORD else ""
-            port = f":{self.POSTGRES_PORT}" if self.POSTGRES_PORT else ""
-            host = self.POSTGRES_SERVER or "localhost"
-            
-            self.DATABASE_URL = f"postgresql://{self.POSTGRES_USER}{password}@{host}{port}/{self.POSTGRES_DB}"
+            # Construit l'URL à partir des composants
+            # Fallback sûr pour l'URL si elle n'est pas définie dans .env
+            self.DATABASE_URL = AnyUrl.build(
+                scheme="postgresql",
+                username=self.POSTGRES_USER,
+                password=self.POSTGRES_PASSWORD,
+                host=self.POSTGRES_SERVER or "localhost",
+                port=self.POSTGRES_PORT,
+                path=f"/{self.POSTGRES_DB}",
+            )
 
 
-# Juste cette ligne, RIEN après
 settings = Settings()

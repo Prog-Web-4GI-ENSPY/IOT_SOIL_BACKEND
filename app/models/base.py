@@ -20,3 +20,11 @@ class BaseModel(Base):
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     deleted_at = Column(DateTime, nullable=True, default=None)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    def soft_delete(self):
+        self.deleted_at = datetime.utcnow()
+        self.updated_at = datetime.utcnow()
+
+    def restore(self):
+        self.deleted_at = None
+        self.updated_at = datetime.utcnow()

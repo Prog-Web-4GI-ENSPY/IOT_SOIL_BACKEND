@@ -13,7 +13,10 @@ class CapteurService:
     
     def get_capteur(self, db: Session, capteur_id: str) -> Optional[Capteur]:
         """Récupérer un capteur par ID"""
-        return db.query(Capteur).filter(Capteur.id == capteur_id).first()
+        return db.query(Capteur).filter(
+            Capteur.id == capteur_id,
+            Capteur.deleted_at.is_(None)
+        ).first()
     
     def get_capteur_by_dev_eui(
         self,
@@ -21,7 +24,10 @@ class CapteurService:
         dev_eui: str
     ) -> Optional[Capteur]:
         """Récupérer un capteur par DevEUI"""
-        return db.query(Capteur).filter(Capteur.dev_eui == dev_eui).first()
+        return db.query(Capteur).filter(
+            Capteur.dev_eui == dev_eui,
+            Capteur.deleted_at.is_(None)
+        ).first()
     
     def get_capteur_by_code(
         self, 
@@ -41,7 +47,10 @@ class CapteurService:
                 CapParcelle.date_desassignation == None
             )
             
-        capteur = query.filter(Capteur.code == code).first()
+        capteur = query.filter(
+            Capteur.code == code,
+            Capteur.deleted_at.is_(None)
+        ).first()
         
         if not capteur:
             raise HTTPException(
@@ -63,7 +72,7 @@ class CapteurService:
         limit: int = 100
     ) -> List[Capteur]:
         """Récupérer une liste de capteurs avec filtres"""
-        query = db.query(Capteur)
+        query = db.query(Capteur).filter(Capteur.deleted_at.is_(None))
         
         # Filtrer par parcelle (via CapParcelle)
         if parcelle_id:
@@ -100,7 +109,15 @@ class CapteurService:
     
     def create_capteur(self, db: Session, capteur_data: CapteurCreate) -> Capteur:
         """Créer un nouveau capteur"""
-        # 5. Créer l'objet
+        # Vérifier si le DevEUI existe déjà
+        existing = self.get_capteur_by_dev_eui(db, capteur_data.dev_eui)
+        if existing:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"Un capteur avec le DevEUI '{capteur_data.dev_eui}' existe déjà"
+            )
+
+        # Créer l'objet
         capteur_dict = capteur_data.dict()
         
         db_capteur = Capteur(
@@ -143,7 +160,7 @@ class CapteurService:
         return capteur
     
     def delete_capteur(self, db: Session, capteur_id: str) -> bool:
-        """Supprimer un capteur"""
+        """Supprimer un capteur (soft delete)"""
         capteur = self.get_capteur(db, capteur_id)
         
         if not capteur:
@@ -152,7 +169,7 @@ class CapteurService:
                 detail="Capteur non trouvé"
             )
         
-        db.delete(capteur)
+        capteur.soft_delete()
         db.commit()
         
         return True
@@ -206,6 +223,7 @@ class CapteurService:
         threshold_time = datetime.utcnow() - timedelta(minutes=minutes_threshold)
         
         return db.query(Capteur).filter(
+            Capteur.deleted_at.is_(None),
             or_(
                 Capteur.last_seen < threshold_time,
                 Capteur.last_seen.is_(None)
@@ -219,6 +237,7 @@ class CapteurService:
     ) -> List[Capteur]:
         """Récupérer les capteurs avec batterie faible"""
         return db.query(Capteur).filter(
+            Capteur.deleted_at.is_(None),
             Capteur.battery_level < threshold
         ).all()
     
@@ -228,7 +247,7 @@ class CapteurService:
         user_id: Optional[str] = None
     ) -> Dict[str, Any]:
         """Obtenir les statistiques des capteurs"""
-        query = db.query(Capteur)
+        query = db.query(Capteur).filter(Capteur.deleted_at.is_(None))
         
         if user_id:
             from app.models.terrain import Terrain

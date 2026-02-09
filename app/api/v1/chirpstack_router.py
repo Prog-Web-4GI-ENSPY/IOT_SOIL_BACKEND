@@ -11,8 +11,6 @@ from app.database import get_db
 from app.models.sensor_data import SensorMeasurements
 from app.models.capteur import Capteur
 from app.models.parcelle import Parcelle
-from app.models.cap_parcelle import CapParcelle
-from sqlalchemy import or_
 import base64
 import json
 
@@ -71,7 +69,7 @@ async def handle_up_event(payload: Dict[str, Any], db: Session):
         if not capteur:
             raise HTTPException(status_code=404, detail=f"Capteur avec DevEUI {dev_eui} inconnu")
 
-        # 2. Identification du Temps et de la Parcelle correspondante
+        # 2. Identification du Temps
         published_at_str = payload.get("publishedAt")
         if published_at_str:
             try:
@@ -86,25 +84,6 @@ async def handle_up_event(payload: Dict[str, Any], db: Session):
                 event_time = datetime.utcnow()
         else:
             event_time = datetime.utcnow()
-
-        # Recherche de l'assignation active au moment 'event_time'
-        assignment = db.query(CapParcelle).filter(
-            CapParcelle.capteur_id == capteur.id,
-            CapParcelle.date_assignation <= event_time
-        ).filter(
-            or_(
-                CapParcelle.date_desassignation == None,
-                CapParcelle.date_desassignation >= event_time
-            )
-        ).order_by(CapParcelle.date_assignation.desc()).first()
-
-        if not assignment:
-            raise HTTPException(
-                status_code=400, 
-                detail=f"Capteur {capteur.code} n'était assigné à aucune parcelle le {event_time}"
-            )
-
-        parcelle_id = assignment.parcelle_id
 
         # 3. Extraction du contenu des mesures (segments)
         content = payload.get("content")
@@ -135,6 +114,9 @@ async def handle_up_event(payload: Dict[str, Any], db: Session):
         metrics = {}
         # Mapping indices: 1:hum, 2:temp, 3:ph, 4:n, 5:p, 6:k
         mapping = {1: "humidity", 2: "temperature", 3: "ph", 4: "azote", 5: "phosphore", 6: "potassium"}
+        
+        parcelle_id = None
+        extracted_parcelle_code = None
 
         for seg in segments:
             parts = [p for p in seg.split(" ") if p]
@@ -144,20 +126,36 @@ async def handle_up_event(payload: Dict[str, Any], db: Session):
                 # Valeur (d:X)
                 valeur = float(parts[0].split(":")[1]) / 100
                 
-                # Capteur Info (s:code;indice)
+                # Capteur Info (s:indice)
                 sensor_info = parts[1].split(":")[1]
-                if ";" in sensor_info:
-                    _, indice_str = sensor_info.split(";")
-                    indice = int(indice_str)
-                    if indice in mapping:
-                        metrics[mapping[indice]] = valeur
+                indice = int(sensor_info)
+                if indice in mapping:
+                    metrics[mapping[indice]] = valeur
+                
+                # Parcelle Info (p:parcelle_code) - if present in this segment
+                for part in parts:
+                    if part.startswith("p:"):
+                        extracted_parcelle_code = part.split(":")[1]
+                        break
+
             except (IndexError, ValueError):
                 continue
 
         if not metrics:
             return {"status": "success", "message": "Aucune mesure valide extraite", "records_created": 0}
 
-        # 4. Création de l'enregistrement unique pour cet uplink
+        # 4. Identification de la Parcelle via parcelle_code
+        if not extracted_parcelle_code:
+            # Fallback si absent du payload mais requis
+            raise HTTPException(status_code=400, detail="Code parcelle (p:XXX) manquant dans le contenu")
+
+        parcelle = db.query(Parcelle).filter(Parcelle.code == extracted_parcelle_code).first()
+        if not parcelle:
+            raise HTTPException(status_code=404, detail=f"Parcelle avec le code {extracted_parcelle_code} non trouvée")
+        
+        parcelle_id = parcelle.id
+
+        # 5. Création de l'enregistrement unique pour cet uplink
         new_meas = SensorMeasurements(
             id=str(uuid.uuid4()),
             capteur_id=capteur.id,
@@ -178,6 +176,7 @@ async def handle_up_event(payload: Dict[str, Any], db: Session):
             "status": "success",
             "records_created": 1,
             "capteur": capteur.code,
+            "parcelle": extracted_parcelle_code,
             "parcelle_id": parcelle_id,
             "timestamp": event_time.isoformat()
         }

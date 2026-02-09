@@ -4,6 +4,7 @@ from typing import List
 from fastapi import HTTPException, status
 from app.core.config import settings
 from app.schemas.ai_integration import MLPredictRequest, MLPredictResponse, SoilData
+from app.services.notification_service import NotificationService
 
 logger = logging.getLogger(__name__)
 
@@ -14,7 +15,7 @@ class MLService:
     PREDICT_ENDPOINT = f"{BASE_URL}/predict/batch"
 
     @staticmethod
-    async def predict_crop(soil_data_list: List[SoilData]) -> MLPredictResponse:
+    async def predict_crop(soil_data_list: List[SoilData], notify: bool = False, user_email: str = None) -> MLPredictResponse:
         """
         Appelle le service ML pour prédire la culture la plus adaptée à partir d'un lot d'échantillons
         """
@@ -46,7 +47,12 @@ class MLService:
                     )
                 
                 data = response.json()
-                return MLPredictResponse(**data)
+                result = MLPredictResponse(**data)
+                # Notification optionnelle
+                if notify and user_email:
+                    notif = NotificationService()
+                    await notif.send_email(user_email, "Résultat de prédiction ML", f"Votre prédiction: {result.recommended_crop}")
+                return result
                 
             except httpx.ConnectError as e:
                 logger.error(f"Erreur de connexion (DNS/Réseau) au service ML: {str(e)}")

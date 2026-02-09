@@ -1,18 +1,11 @@
-from app.services.twilio_service import TwilioService
-import logging
-
-logger = logging.getLogger(__name__)
+# app/services/sms_service.py
+from app.services.infobip_service import InfobipService  # ← Remplace twilio_service
 
 class SMSService:
-    """Service pour l'envoi de SMS via Twilio"""
     def __init__(self):
-        self.twilio = TwilioService()
-
-    async def send_sms(self, to: str, message: str) -> dict:
-        return await self.twilio.send_sms(to, message)
+        self.infobip = InfobipService()  # ← Interface identique !
 
 class SMSServiceFactory:
     @staticmethod
     def get_service(provider: str = None):
-        # Pour l'instant, retourne toujours Twilio
-        return SMSService()
+        return SMSService()  # Toujours Infobip maintenant

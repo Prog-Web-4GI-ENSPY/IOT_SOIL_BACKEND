@@ -12,13 +12,23 @@ class ParcelleService:
     """Service pour la gestion des parcelles"""
     
     @staticmethod
-    def generate_code(db: Session, terrain_id: str) -> str:
-        """Générer un code unique pour la parcelle"""
-        count = db.query(func.count(Parcelle.id)).filter(
-            Parcelle.terrain_id == terrain_id
-        ).scalar()
+    def generate_code(db: Session) -> str:
+        """Générer un code numérique unique pour la parcelle (1, 2, 3...)"""
+        # Récupérer le code le plus élevé
+        # On essaie de convertir en entier pour le tri si possible, sinon tri alphabétique
+        all_codes = db.query(Parcelle.code).all()
         
-        return f"PARC-{terrain_id[:8]}-{count + 1:04d}"
+        numeric_codes = []
+        for c in all_codes:
+            try:
+                numeric_codes.append(int(c[0]))
+            except (ValueError, TypeError):
+                continue
+        
+        if not numeric_codes:
+            return "1"
+            
+        return str(max(numeric_codes) + 1)
     
     @staticmethod
     def get_parcelle_by_code(db: Session, code: str, user_id: str) -> Parcelle:
@@ -63,7 +73,7 @@ class ParcelleService:
             )
         
         try:
-            code = parcelle_data.code or ParcelleService.generate_code(db, parcelle_data.terrain_id)
+            code = ParcelleService.generate_code(db)
             
             parcelle = Parcelle(
                 id=str(uuid.uuid4()),

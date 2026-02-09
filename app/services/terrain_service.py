@@ -19,6 +19,7 @@ class TerrainService:
                 nom=terrain_data.nom,
                 description=terrain_data.description,
                 localite_id=terrain_data.localite_id,
+                superficie=terrain_data.superficie,
                 user_id=user_id
             )
             

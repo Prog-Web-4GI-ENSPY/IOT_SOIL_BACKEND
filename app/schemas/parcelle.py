@@ -11,13 +11,13 @@ class CoordinatePoint(BaseModel):
 
 class ParcelleBase(BaseModel):
     nom: str = Field(..., min_length=2, max_length=200)
-    code: Optional[str] = Field(None, max_length=50)
     description: Optional[str] = Field(None, max_length=1000)
     terrain_id: str
     superficie: float = Field(..., gt=0)
 
 
 class ParcelleCreate(ParcelleBase):
+    """Schéma pour la création d'une parcelle (le code est généré automatiquement)"""
     pass
 
 

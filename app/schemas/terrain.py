@@ -8,6 +8,7 @@ class TerrainBase(BaseModel):
     nom: str = Field(..., min_length=2, max_length=200)
     description: Optional[str] = Field(None, max_length=1000)
     localite_id: str
+    superficie: Optional[float] = Field(None, gt=0)
 
 
 class TerrainCreate(TerrainBase):
@@ -17,6 +18,7 @@ class TerrainCreate(TerrainBase):
 class TerrainUpdate(BaseModel):
     nom: Optional[str] = Field(None, min_length=2, max_length=200)
     description: Optional[str] = Field(None, max_length=1000)
+    superficie: Optional[float] = Field(None, gt=0)
 
 
 class TerrainResponse(TerrainBase):

@@ -18,6 +18,7 @@ class Terrain(BaseModel):
         
     # Caractéristiques
     altitude_moyenne = Column(Float)  # mètres
+    superficie = Column(Float)  # hectares
     
     # Propriétaire
     user_id = Column(String(36), ForeignKey("users.id"), nullable=False, index=True)

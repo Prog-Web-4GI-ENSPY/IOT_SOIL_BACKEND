@@ -110,7 +110,7 @@ class AuthService:
         
         return user
     
-    def register_user(
+    async def register_user(
         self,
         db: Session,
         user_data: UserCreate,
@@ -149,7 +149,7 @@ class AuthService:
         if notify:
             notif = NotificationService()
             try:
-                notif.send_email(db_user.email, "Bienvenue sur AgroPredict", "Votre compte a été créé avec succès.")
+                await notif.send_email(db_user.email, "Bienvenue sur AgroPredict", "Votre compte a été créé avec succès.")
             except Exception:
                 pass
         

@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr, Field, validator
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 from enum import Enum
 
@@ -9,11 +9,19 @@ class UserRole(str, Enum):
     USER = "user"
 
 
+class NotificationMode(str, Enum):
+    EMAIL = "email"
+    WHATSAPP = "whatsapp"
+    SMS = "sms"
+    TELEGRAM = "telegram"
+
+
 class UserBase(BaseModel):
     nom: str = Field(..., min_length=2, max_length=100)
     prenom: str = Field(..., min_length=2, max_length=100)
     email: EmailStr
     telephone: Optional[str] = Field(None, max_length=20)
+    notification_modes: List[NotificationMode] = Field(default_factory=lambda: [NotificationMode.EMAIL])
 
 
 class UserCreate(UserBase):
@@ -35,6 +43,7 @@ class UserUpdate(BaseModel):
     prenom: Optional[str] = Field(None, min_length=2, max_length=100)
     telephone: Optional[str] = None
     avatar: Optional[str] = None
+    notification_modes: Optional[List[NotificationMode]] = None
 
 
 class UserResponse(BaseModel):
@@ -45,6 +54,7 @@ class UserResponse(BaseModel):
     telephone: Optional[str]
     role: UserRole
     avatar: Optional[str] = None
+    notification_modes: List[NotificationMode] = []
     date_inscription: datetime
     dernier_acces: Optional[datetime] = None
     created_at: datetime

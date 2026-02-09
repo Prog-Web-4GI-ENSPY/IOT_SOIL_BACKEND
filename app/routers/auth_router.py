@@ -25,23 +25,23 @@ router = APIRouter()
 
 
 @router.post("/register/user", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
-def register_user(
+async def register_user(
     user_data: UserCreate,
     db: Session = Depends(get_db)
 ):
     """Inscription d'un utilisateur classique"""
     from app.services.auth_service import auth_service
-    return auth_service.register_user(db, user_data, role=UserRole.USER)
+    return await auth_service.register_user(db, user_data, role=UserRole.USER)
 
 
 @router.post("/register/admin", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
-def register_admin(
+async def register_admin(
     user_data: UserCreate,
     db: Session = Depends(get_db)
 ):
     """Inscription d'un administrateur"""
     from app.services.auth_service import auth_service
-    return auth_service.register_user(db, user_data, role=UserRole.ADMIN)
+    return await auth_service.register_user(db, user_data, role=UserRole.ADMIN)
 
 
 @router.post("/login", response_model=TokenResponse)

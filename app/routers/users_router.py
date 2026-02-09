@@ -1,8 +1,8 @@
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Body
 from sqlalchemy.orm import Session
 from app.database import get_db
-from app.schemas.user import UserResponse, UserUpdate
+from app.schemas.user import UserResponse, UserUpdate, NotificationMode
 from app.services.users_service import UserService
 from app.core.dependencies import (
     get_current_active_user,
@@ -34,6 +34,19 @@ def update_my_profile(
     Met a jour le profil de l'utilisateur connecte
     """
     return UserService.update_user(db, str(current_user.id), user_data)
+
+
+@router.put("/me/notification-settings", response_model=UserResponse)
+def update_notification_settings(
+    notification_modes: List[NotificationMode] = Body(...),
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Met a jour les modes de notification de l'utilisateur connecte
+    """
+    user_update = UserUpdate(notification_modes=notification_modes)
+    return UserService.update_user(db, str(current_user.id), user_update)
 
 
 @router.get("/", response_model=List[UserResponse])

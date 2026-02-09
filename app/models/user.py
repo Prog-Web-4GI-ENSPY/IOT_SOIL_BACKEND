@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, DateTime, Enum as SQLEnum
+from sqlalchemy import Column, String, DateTime, Enum as SQLEnum, JSON
 from sqlalchemy.orm import relationship
 from datetime import datetime
 import enum
@@ -18,6 +18,13 @@ class UserStatus(str, enum.Enum):
     PENDING = "pending"
 
 
+class NotificationMode(str, enum.Enum):
+    EMAIL = "email"
+    WHATSAPP = "whatsapp"
+    SMS = "sms"
+    TELEGRAM = "telegram"
+
+
 class User(BaseModel):
     __tablename__ = "users"
 
@@ -29,6 +36,7 @@ class User(BaseModel):
     role = Column(SQLEnum(UserRole), default=UserRole.USER, nullable=False)
     status = Column(SQLEnum(UserStatus), default=UserStatus.ACTIVE, nullable=False)
     avatar = Column(String(500))
+    notification_modes = Column(JSON, default=list, nullable=False)  # ["email", "sms", "telegram"]
     date_inscription = Column(DateTime, default=datetime.utcnow, nullable=False)
     dernier_acces = Column(DateTime)
     

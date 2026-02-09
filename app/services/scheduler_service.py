@@ -81,15 +81,11 @@ class SchedulerService:
                 if not latest_rec or latest_rec.created_at < threshold_date:
                     logger.info(f"Déclenchement recommandation auto pour la parcelle {parcelle.id} (User: {user.email})")
                     try:
-                        # On appelle la fonction de prédiction
-                        # Note: on doit mocker ou adapter l'appel car predict_parcelle_crop attend current_user et db
-                        from app.api.v1.recommendation_router import predict_parcelle_crop
-                        # On simule l'appel (on pourrait refactoriser le router en service pour plus de propreté)
-                        await predict_parcelle_crop(
-                            parcelle_id=str(parcelle.id),
-                            request_data=None,
-                            current_user=user,
-                            db=db
+                        from app.services.recommendation_service import RecommendationService
+                        await RecommendationService.run_unified_recommendation(
+                            db=db,
+                            user=user,
+                            parcelle_id=str(parcelle.id)
                         )
                     except Exception as e:
                         logger.error(f"Échec recommandation auto pour parcelle {parcelle.id}: {str(e)}")

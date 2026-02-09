@@ -5,6 +5,15 @@ from app.models.recommendation import Recommendation
 from app.schemas.recommendation import RecommendationCreate, RecommendationUpdate
 from datetime import datetime
 import uuid
+import logging
+from app.services.ml_service import MLService
+from app.services.expert_system_service import ExpertSystemService
+from app.services.notification_service import NotificationService
+from app.models.sensor_data import SensorMeasurements
+from app.models.parcelle import Parcelle
+from sqlalchemy import func
+
+logger = logging.getLogger(__name__)
 
 
 class RecommendationService:
@@ -301,3 +310,122 @@ class RecommendationService:
                 f"Température: {temperature}°C, Humidité: {humidity}%.",
                 "Faible"
             )
+
+    @staticmethod
+    async def run_unified_recommendation(
+        db: Session,
+        user: any,
+        parcelle_id: Optional[str] = None,
+        soil_data: Optional[any] = None,
+        region: Optional[str] = None,
+        query: Optional[str] = None
+    ) -> dict:
+        """
+        Orchestre une recommandation complète (ML + Système Expert) avec notifications.
+        """
+
+
+        # 1. Obtenir les données du sol
+        final_soil_data_batch = []
+        parcelle = None
+        
+        if parcelle_id:
+            parcelle = db.query(Parcelle).filter(Parcelle.id == parcelle_id).first()
+            if not parcelle:
+                raise HTTPException(status_code=404, detail="Parcelle non trouvée")
+            
+            # Récupérer les mesures les plus récentes si soil_data n'est pas fourni
+            if not soil_data:
+                latest_timestamp = db.query(func.max(SensorMeasurements.timestamp))\
+                    .filter(SensorMeasurements.parcelle_id == parcelle_id).scalar()
+                
+                if latest_timestamp:
+                    daily_measurements = db.query(SensorMeasurements)\
+                        .filter(SensorMeasurements.parcelle_id == parcelle_id,
+                                func.date(SensorMeasurements.timestamp) == latest_timestamp.date()).all()
+                    
+                    from app.schemas.ai_integration import SoilData
+                    final_soil_data_batch = [
+                        SoilData(
+                            N=int(m.azote or 0), P=int(m.phosphore or 0), K=int(m.potassium or 0),
+                            temperature=m.temperature or 0.0, humidity=m.humidity or 0.0, ph=m.ph or 0.0
+                        ) for m in daily_measurements
+                    ]
+        
+        if not final_soil_data_batch and soil_data:
+            final_soil_data_batch = [soil_data] if not isinstance(soil_data, list) else soil_data
+
+        if not final_soil_data_batch:
+            raise HTTPException(status_code=400, detail="Données du sol insuffisantes pour la prédiction.")
+
+        # 2. ML Prediction
+        ml_result = await MLService.predict_crop(final_soil_data_batch)
+        recommended_crop = ml_result.recommended_crop
+
+        # 3. Système Expert (4 questions)
+        current_region = region or (parcelle.terrain.localite.region if parcelle and parcelle.terrain and parcelle.terrain.localite else "Centre")
+        
+        queries = {
+            "plantation": query or f"Quelle est la période optimale de plantation pour le {recommended_crop} dans la région {current_region} ?",
+            "irrigation": f"Quels sont les besoins en irrigation spécifiques pour le {recommended_crop} ?",
+            "engrais": f"Quels engrais et amendements du sol recommandez-vous pour le {recommended_crop} ?",
+            "prevention": f"Comment prévenir les maladies et ravageurs communs du {recommended_crop} ?"
+        }
+
+        results_justification = {}
+        full_justification = ""
+        
+        for key, q in queries.items():
+            expert_res = await ExpertSystemService.query_expert_system(query=q, region=current_region)
+            resp_text = expert_res.final_response if expert_res else "Pas de réponse disponible."
+            results_justification[key] = resp_text
+            full_justification += f"\n\n### {key.capitalize()}\n{resp_text}"
+
+        # 4. Sauvegarde DB
+        new_rec = Recommendation(
+            id=str(uuid.uuid4()),
+            titre=f"Analyse Complète pour {recommended_crop}",
+            contenu=full_justification.strip(),
+            priorite="Normal",
+            parcelle_id=parcelle_id if parcelle_id else None,
+            user_id=str(user.id),
+            expert_metadata={
+                "source": "Service_Orchestrator",
+                "ml_confidence": ml_result.confidence,
+                "recommended_crop": recommended_crop,
+                "detailed_responses": results_justification,
+                "ml_details": ml_result.dict()
+            }
+        )
+        db.add(new_rec)
+        db.commit()
+        db.refresh(new_rec)
+
+        # 5. Notifications
+        notif_service = NotificationService()
+        user_pref_modes = getattr(user, 'notification_modes', ['email'])
+        message_title = f"AgroPredict: Recommandation pour {recommended_crop}"
+        message_body = f"Culture recommandée: {recommended_crop}\nConfiance: {ml_result.confidence:.2f}\n\nJustification:\n{full_justification.strip()}"
+        
+        for mode in user_pref_modes:
+            try:
+                if mode == 'email':
+                    await notif_service.send_email(user.email, message_title, message_body)
+                elif mode == 'sms' and user.telephone:
+                    await notif_service.send_sms(user.telephone, message_body)
+                elif mode == 'whatsapp' and user.telephone:
+                    await notif_service.send_whatsapp(user.telephone, message_body)
+                elif mode == 'telegram':
+                    await notif_service.send_telegram(message_body)
+            except Exception as e:
+                logger.error(f"Erreur notification ({mode}): {str(e)}")
+
+        from app.schemas.ai_integration import UnifiedRecommendationResponse
+        return UnifiedRecommendationResponse(
+            recommended_crop=recommended_crop,
+            confidence_score=ml_result.confidence,
+            justification=full_justification.strip(),
+            detailed_justifications=results_justification,
+            ml_details=ml_result,
+            generated_at=datetime.utcnow().isoformat()
+        )

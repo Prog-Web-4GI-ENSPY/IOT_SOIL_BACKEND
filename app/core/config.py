@@ -45,7 +45,7 @@ class Settings(BaseSettings):
 
     # --- CORS ---
     # Utilisez 'List' ou 'list' (avec Pydantic v2) pour les listes
-    BACKEND_CORS_ORIGINS: List[str] = Field(default=["https://smart-agro-three.vercel.app","http://localhost:3000","http://localhost:3001"])
+    BACKEND_CORS_ORIGINS: List[str] = Field(default=["https://smart-agro-three.vercel.app","https://administrative-part-of-smart-agri-i.vercel.app","http://localhost:3000","http://localhost:3001"])
 
 
     # --- Méthode de construction post-initialisation ---

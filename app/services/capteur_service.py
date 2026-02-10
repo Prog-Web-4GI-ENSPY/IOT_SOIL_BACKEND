@@ -105,7 +105,7 @@ class CapteurService:
         if type_capteur:
             query = query.filter(Capteur.type_capteur == type_capteur)
         
-        return query.offset(skip).limit(limit).all()
+        return query.order_by(Capteur.created_at.desc()).offset(skip).limit(limit).all()
     
     def create_capteur(self, db: Session, capteur_data: CapteurCreate) -> Capteur:
         """Créer un nouveau capteur"""

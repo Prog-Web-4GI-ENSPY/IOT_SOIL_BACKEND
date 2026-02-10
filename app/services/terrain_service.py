@@ -65,7 +65,7 @@ class TerrainService:
             Terrain.deleted_at.is_(None)
         )
         
-        return query.offset(skip).limit(limit).all()
+        return query.order_by(Terrain.created_at.desc()).offset(skip).limit(limit).all()
 
     @staticmethod
     def get_all_terrains_admin(
@@ -76,7 +76,7 @@ class TerrainService:
         """Récupérer tous les terrains du système (Admin uniquement)"""
         return db.query(Terrain).filter(
             Terrain.deleted_at.is_(None)
-        ).offset(skip).limit(limit).all()
+        ).order_by(Terrain.created_at.desc()).offset(skip).limit(limit).all()
     
     @staticmethod
     def update_terrain(

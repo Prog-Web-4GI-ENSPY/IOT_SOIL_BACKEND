@@ -3,7 +3,10 @@ from app.services.infobip_service import InfobipService  # ← Remplace twilio_s
 
 class SMSService:
     def __init__(self):
-        self.infobip = InfobipService()  # ← Interface identique !
+        self.infobip = InfobipService()
+
+    async def send_sms(self, to: str, message: str) -> dict:
+        return await self.infobip.send_sms(to, message)
 
 class SMSServiceFactory:
     @staticmethod

@@ -36,5 +36,5 @@ class Capteur(BaseModel):
     date_activation = Column(DateTime)
 
 
-    donnees = relationship("SensorMeasurements", back_populates="capteur", cascade="all, delete-orphan")
+    donnees = relationship("SensorMeasurements", back_populates="capteur", cascade="all, delete-orphan", order_by="desc(SensorMeasurements.timestamp)")
 

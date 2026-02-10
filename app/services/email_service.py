@@ -9,11 +9,11 @@ logger = logging.getLogger(__name__)
 class EmailService:
     """Service pour l'envoi d'emails via SMTP"""
     def __init__(self):
-        self.smtp_host = getattr(settings, 'SMTP_HOST', None)
-        self.smtp_port = getattr(settings, 'SMTP_PORT', 587)
-        self.smtp_user = getattr(settings, 'SMTP_USER', None)
-        self.smtp_password = getattr(settings, 'SMTP_PASSWORD', None)
-        self.from_email = getattr(settings, 'EMAILS_FROM_EMAIL', self.smtp_user)
+        self.smtp_host = settings.SMTP_HOST
+        self.smtp_port = settings.SMTP_PORT
+        self.smtp_user = settings.SMTP_USER
+        self.smtp_password = settings.SMTP_PASSWORD
+        self.from_email = settings.EMAILS_FROM_EMAIL or self.smtp_user
 
     def send_email(self, to: str, subject: str, body: str) -> dict:
         msg = MIMEMultipart()

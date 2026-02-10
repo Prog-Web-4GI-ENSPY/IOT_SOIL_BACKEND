@@ -12,6 +12,7 @@ class InfobipService:
         self.base_url = settings.INFOBIP_BASE_URL.rstrip('/')
         self.api_key = settings.INFOBIP_API_KEY
         self.sender_number = settings.INFOBIP_SENDER_NUMBER
+        logger.info(f"InfobipService initialisé avec base_url: {self.base_url}")
         self.headers = {
             "Authorization": f"App {self.api_key}",
             "Content-Type": "application/json",
@@ -22,7 +23,14 @@ class InfobipService:
         """Envoi de SMS via Infobip API"""
         try:
             from_number = sender or self.sender_number
-            url = f"{self.base_url}/sms/2/text/advanced"
+            
+            # Nettoyage et vérification de l'URL
+            base = self.base_url
+            if not base.startswith("http"):
+                base = f"https://{base}"
+                
+            url = f"{base}/sms/2/text/advanced"
+            logger.info(f"Tentative d'envoi SMS via: {url}")
             
             payload = {
                 "messages": [{

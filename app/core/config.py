@@ -40,6 +40,13 @@ class Settings(BaseSettings):
     INFOBIP_BASE_URL: str = Field(default="https://api.infobip.com")
     INFOBIP_API_KEY: Optional[str] = None
     INFOBIP_SENDER_NUMBER: Optional[str] = None
+    
+    # --- Emails ---
+    SMTP_HOST: Optional[str] = None
+    SMTP_PORT: int = Field(default=587)
+    SMTP_USER: Optional[str] = None
+    SMTP_PASSWORD: Optional[str] = None
+    EMAILS_FROM_EMAIL: Optional[str] = None
 
     # --- AI Services ---
     EXPERT_SYSTEM_URL: str = Field(default="https://systeme-expert-5iyu.onrender.com")

@@ -19,12 +19,12 @@ class Parcelle(BaseModel):
     # Géométrie
     superficie = Column(Float, nullable=False)  # hectares
 
-    sensor_measurements = relationship( "SensorMeasurements", back_populates="parcelle" ) 
+    sensor_measurements = relationship("SensorMeasurements", back_populates="parcelle", order_by="desc(SensorMeasurements.timestamp)") 
 
     # Relations
     terrain = relationship("Terrain", back_populates="parcelles")
-    recommandations = relationship("Recommendation", back_populates="parcelle")
-    historique_cultures = relationship("HistoriqueCulture", back_populates="parcelle", cascade="all, delete-orphan")
+    recommandations = relationship("Recommendation", back_populates="parcelle", order_by="desc(Recommendation.date_emission)")
+    historique_cultures = relationship("HistoriqueCulture", back_populates="parcelle", cascade="all, delete-orphan", order_by="desc(HistoriqueCulture.date_plantation)")
 
 
 class HistoriqueCulture(BaseModel):

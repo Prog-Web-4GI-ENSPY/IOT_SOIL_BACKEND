@@ -7,7 +7,8 @@ from app.api.v1 import (
     location_router,
     sensor_data_router,
     chirpstack_router,
-    admin_router
+    admin_router,
+    notification_router
 )
 from app.routers import auth_router, users_router
 
@@ -97,4 +98,11 @@ api_router.include_router(
     recommendation_router.router,
     prefix="/recommendations",
     tags=["Recommandations"]
+)
+
+# Notifications endpoints
+api_router.include_router(
+    notification_router.router,
+    prefix="/notifications",
+    tags=["Notifications"]
 )

@@ -342,7 +342,8 @@ class RecommendationService:
                 if latest_timestamp:
                     daily_measurements = db.query(SensorMeasurements)\
                         .filter(SensorMeasurements.parcelle_id == parcelle_id,
-                                func.date(SensorMeasurements.timestamp) == latest_timestamp.date()).all()
+                                func.date(SensorMeasurements.timestamp) == latest_timestamp.date())\
+                        .order_by(SensorMeasurements.timestamp.desc()).all()
                     
                     from app.schemas.ai_integration import SoilData
                     final_soil_data_batch = [

@@ -348,8 +348,12 @@ class RecommendationService:
                     from app.schemas.ai_integration import SoilData
                     final_soil_data_batch = [
                         SoilData(
-                            N=int(m.azote or 0), P=int(m.phosphore or 0), K=int(m.potassium or 0),
-                            temperature=m.temperature or 0.0, humidity=m.humidity or 0.0, ph=m.ph or 0.0
+                            N=max(int(m.azote or 1), 1),  # ML service requires > 0
+                            P=max(int(m.phosphore or 1), 1),  # ML service requires > 0
+                            K=max(int(m.potassium or 1), 1),  # ML service requires > 0
+                            temperature=max(m.temperature or 20.0, 0.1),
+                            humidity=max(m.humidity or 50.0, 0.1),
+                            ph=max(m.ph or 6.5, 0.1)
                         ) for m in daily_measurements
                     ]
         
@@ -358,6 +362,21 @@ class RecommendationService:
 
         if not final_soil_data_batch:
             raise HTTPException(status_code=400, detail="Données du sol insuffisantes pour la prédiction.")
+
+        # Validation: s'assurer que toutes les valeurs respectent les contraintes du ML service
+        for idx, sd in enumerate(final_soil_data_batch):
+            if sd.N <= 0:
+                final_soil_data_batch[idx].N = 1
+            if sd.P <= 0:
+                final_soil_data_batch[idx].P = 1
+            if sd.K <= 0:
+                final_soil_data_batch[idx].K = 1
+            if sd.temperature <= 0:
+                final_soil_data_batch[idx].temperature = 20.0
+            if sd.humidity <= 0:
+                final_soil_data_batch[idx].humidity = 50.0
+            if sd.ph <= 0:
+                final_soil_data_batch[idx].ph = 6.5
 
         # 2. ML Prediction
         ml_result = await MLService.predict_crop(final_soil_data_batch)

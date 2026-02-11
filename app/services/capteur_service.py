@@ -108,17 +108,26 @@ class CapteurService:
         return query.order_by(Capteur.created_at.desc()).offset(skip).limit(limit).all()
     
     def create_capteur(self, db: Session, capteur_data: CapteurCreate) -> Capteur:
-        """Créer un nouveau capteur"""
-        # Vérifier si le DevEUI existe déjà
-        existing = self.get_capteur_by_dev_eui(db, capteur_data.dev_eui)
+        # Forcer en majuscules
+        dev_eui_upper = capteur_data.dev_eui.upper()
+
+        # Vérifier si le DevEUI existe, même s'il est "soft deleted"
+        existing = db.query(Capteur).filter(Capteur.dev_eui == dev_eui_upper).first()
+        
         if existing:
+            if existing.deleted_at is not None:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail=f"Un capteur avec le DevEUI '{dev_eui_upper}' existe déjà dans la corbeille. Veuillez le restaurer ou le supprimer définitivement."
+                )
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail=f"Un capteur avec le DevEUI '{capteur_data.dev_eui}' existe déjà"
+                detail=f"Un capteur avec le DevEUI '{dev_eui_upper}' existe déjà."
             )
 
-        # Créer l'objet
+        # Préparer les données en injectant le dev_eui en majuscules
         capteur_dict = capteur_data.dict()
+        capteur_dict['dev_eui'] = dev_eui_upper # On s'assure que c'est bien stocké en MAJUSCULES
         
         db_capteur = Capteur(
             **capteur_dict,

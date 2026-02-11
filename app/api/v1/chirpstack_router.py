@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, status, HTTPException, Body, Query
 from sqlalchemy.orm import Session
 from typing import Dict, Any
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from app.database import get_db
 from app.models.sensor_data import SensorMeasurements
@@ -33,6 +33,7 @@ async def handle_chirpstack_webhook(
     Point d'entrée principal pour les webhooks ChirpStack.
     Dispatche vers la fonction appropriée selon le paramètre 'event'.
     """
+    print(f"PAYLOAD : {payload} , EVENT : {event}")
     if event == "up":
         return await handle_up_event(payload, db)
     elif event == "join":
@@ -65,6 +66,8 @@ async def handle_up_event(payload: Dict[str, Any], db: Session):
         except Exception:
             dev_eui = dev_eui_raw.upper()
 
+        print(f"DEVEUI DECODE {dev_eui}")
+        
         capteur = db.query(Capteur).filter(Capteur.dev_eui == dev_eui).first()
         if not capteur:
             raise HTTPException(status_code=404, detail=f"Capteur avec DevEUI {dev_eui} inconnu")
@@ -113,7 +116,7 @@ async def handle_up_event(payload: Dict[str, Any], db: Session):
         
         metrics = {}
         # Mapping indices: 1:hum, 2:temp, 3:ph, 4:n, 5:p, 6:k
-        mapping = {1: "humidity", 2: "temperature", 3: "ph", 4: "azote", 5: "phosphore", 6: "potassium"}
+        mapping = {1: "humidity", 2: "temperature", 3: "ph", 4: "azote", 5: "phosphore", 6: "potassium", 7: "ph"}
         
         parcelle_id = None
         extracted_parcelle_code = None
@@ -155,7 +158,41 @@ async def handle_up_event(payload: Dict[str, Any], db: Session):
         
         parcelle_id = parcelle.id
 
-        # 5. Création de l'enregistrement unique pour cet uplink
+        # 5. Recherche d'un enregistrement récent pour fusionner (fenêtre de 10 minutes)
+        time_limit = event_time - timedelta(minutes=10)
+        existing_meas = db.query(SensorMeasurements).filter(
+            SensorMeasurements.capteur_id == capteur.id,
+            SensorMeasurements.parcelle_id == parcelle_id,
+            SensorMeasurements.timestamp >= time_limit,
+            SensorMeasurements.timestamp <= event_time
+        ).order_by(SensorMeasurements.timestamp.desc()).first()
+
+        if existing_meas:
+            # Mise à jour de l'enregistrement existant
+            for key, value in metrics.items():
+                if value is not None:
+                    setattr(existing_meas, key, value)
+            
+            # Fusion du JSON measurements
+            current_json = dict(existing_meas.measurements) if existing_meas.measurements else {}
+            current_json.update(metrics)
+            existing_meas.measurements = current_json
+            
+            # Mise à jour du timestamp vers le plus récent
+            existing_meas.timestamp = event_time
+            
+            db.commit()
+            return {
+                "status": "success",
+                "records_updated": 1,
+                "capteur": capteur.code,
+                "parcelle": extracted_parcelle_code,
+                "parcelle_id": parcelle_id,
+                "timestamp": event_time.isoformat(),
+                "merged": True
+            }
+
+        # 6. Création d'un nouvel enregistrement si aucun récent n'est trouvé
         new_meas = SensorMeasurements(
             id=str(uuid.uuid4()),
             capteur_id=capteur.id,

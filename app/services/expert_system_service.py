@@ -24,7 +24,15 @@ class ExpertSystemService:
         "region": region
             }
         
-        async with httpx.AsyncClient(timeout=30.0) as client:
+        # Configuration détaillée du timeout (similaire au ML service)
+        # Augmenté pour gérer les cold starts sur Render
+        timeout = httpx.Timeout(
+            120.0,          # Global timeout (2 minutes)
+            connect=10.0,   # Timeout de connexion
+            read=100.0      # Timeout de lecture
+        )
+        
+        async with httpx.AsyncClient(timeout=timeout) as client:
             try:
                 response = await client.post(
                     ExpertSystemService.QUERY_ENDPOINT,
@@ -46,8 +54,14 @@ class ExpertSystemService:
                     await notif.send_email(user_email, "Réponse Système Expert", f"{result.final_response}")
                 return result
                 
+            except httpx.ConnectError as e:
+                logger.error(f"Erreur de connexion (DNS/Réseau) au SE ({ExpertSystemService.QUERY_ENDPOINT}): {str(e)}")
+                return None
+            except httpx.TimeoutException as e:
+                logger.error(f"Timeout lors de l'appel au SE ({ExpertSystemService.QUERY_ENDPOINT}): {str(e)}")
+                return None
             except httpx.RequestError as e:
-                logger.error(f"Erreur de connexion au SE: {str(e)}")
+                logger.error(f"Erreur de requête au SE ({ExpertSystemService.QUERY_ENDPOINT}): {str(e)}")
                 return None
             except Exception as e:
                 logger.error(f"Erreur inattendue SE: {str(e)}")

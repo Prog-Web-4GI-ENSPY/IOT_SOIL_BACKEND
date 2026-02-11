@@ -25,10 +25,11 @@ class MLService:
         }
         
         # Configuration détaillée du timeout
+        # Augmenté pour gérer les services ML lents (ex: cold start sur Render)
         timeout = httpx.Timeout(
-            20.0,           # Global timeout (augmenté pour le batch)
-            connect=5.0,    
-            read=15.0       
+            120.0,          # Global timeout (2 minutes pour le batch)
+            connect=10.0,   # Timeout de connexion
+            read=100.0      # Timeout de lecture (ML peut être lent)
         )
 
         

@@ -168,29 +168,42 @@ async def handle_up_event(payload: Dict[str, Any], db: Session):
         ).order_by(SensorMeasurements.timestamp.desc()).first()
 
         if existing_meas:
-            # Mise à jour de l'enregistrement existant
-            for key, value in metrics.items():
-                if value is not None:
-                    setattr(existing_meas, key, value)
+            # Vérifier si l'une des métriques entrantes écraserait une valeur existante
+            # Si tel est le cas, c'est probablement un nouveau cycle de mesure, on ne fusionne pas.
+            should_merge = True
+            for key in metrics.keys():
+                existing_val = getattr(existing_meas, key)
+                if existing_val is not None:
+                    should_merge = False
+                    break
             
-            # Fusion du JSON measurements
-            current_json = dict(existing_meas.measurements) if existing_meas.measurements else {}
-            current_json.update(metrics)
-            existing_meas.measurements = current_json
-            
-            # Mise à jour du timestamp vers le plus récent
-            existing_meas.timestamp = event_time
-            
-            db.commit()
-            return {
-                "status": "success",
-                "records_updated": 1,
-                "capteur": capteur.code,
-                "parcelle": extracted_parcelle_code,
-                "parcelle_id": parcelle_id,
-                "timestamp": event_time.isoformat(),
-                "merged": True
-            }
+            if should_merge:
+                # Mise à jour de l'enregistrement existant
+                for key, value in metrics.items():
+                    if value is not None:
+                        setattr(existing_meas, key, value)
+                
+                # Fusion du JSON measurements
+                current_json = dict(existing_meas.measurements) if existing_meas.measurements else {}
+                current_json.update(metrics)
+                existing_meas.measurements = current_json
+                
+                # Mise à jour du timestamp vers le plus récent
+                existing_meas.timestamp = event_time
+                
+                db.commit()
+                return {
+                    "status": "success",
+                    "records_updated": 1,
+                    "capteur": capteur.code,
+                    "parcelle": extracted_parcelle_code,
+                    "parcelle_id": parcelle_id,
+                    "timestamp": event_time.isoformat(),
+                    "merged": True
+                }
+            else:
+                # On force la création d'un nouvel enregistrement
+                existing_meas = None
 
         # 6. Création d'un nouvel enregistrement si aucun récent n'est trouvé
         new_meas = SensorMeasurements(

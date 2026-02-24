@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, status, Query, Body, HTTPException
+from fastapi import APIRouter, Depends, status, Query, Body, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from app.database import get_db
@@ -89,6 +89,7 @@ async def get_recommendation(
 )
 async def predict_crop_unified(
     request_data: UnifiedRecommendationRequest,
+    background_tasks: BackgroundTasks,
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
@@ -98,6 +99,7 @@ async def predict_crop_unified(
     return await RecommendationService.run_unified_recommendation(
         db=db,
         user=current_user,
+        background_tasks=background_tasks,
         parcelle_id=request_data.parcelle_id,
         soil_data=request_data.soil_data,
         region=request_data.region,
@@ -112,6 +114,7 @@ async def predict_crop_unified(
 )
 async def predict_parcelle_crop(
     parcelle_id: str,
+    background_tasks: BackgroundTasks,
     request_data: Optional[ParcellePredictionRequest] = Body(None),
     current_user: dict = Depends(get_current_user),
     db: Session = Depends(get_db)
@@ -122,6 +125,7 @@ async def predict_parcelle_crop(
     return await RecommendationService.run_unified_recommendation(
         db=db,
         user=current_user,
+        background_tasks=background_tasks,
         parcelle_id=parcelle_id,
         region=request_data.region if request_data else None,
         query=request_data.query if request_data else None

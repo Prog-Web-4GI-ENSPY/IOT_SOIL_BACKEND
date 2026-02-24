@@ -315,6 +315,7 @@ class RecommendationService:
     async def run_unified_recommendation(
         db: Session,
         user: any,
+        background_tasks: any,
         parcelle_id: Optional[str] = None,
         soil_data: Optional[any] = None,
         region: Optional[str] = None,
@@ -322,6 +323,7 @@ class RecommendationService:
     ) -> dict:
         """
         Orchestre une recommandation complète (ML + Système Expert) avec notifications.
+        Exécute le ML en temps réel, et lance le Système Expert + Notifications en arrière-plan.
         """
 
 
@@ -382,70 +384,121 @@ class RecommendationService:
         ml_result = await MLService.predict_crop(final_soil_data_batch)
         recommended_crop = ml_result.recommended_crop
 
-        # 3. Système Expert (4 questions)
+        # Lancement de la tâche de fond pour l'enrichissement par le système expert et les notifications
         current_region = region or (parcelle.terrain.localite.region if parcelle and parcelle.terrain and parcelle.terrain.localite else "Centre")
-        
-        queries = {
-            "plantation": query or f"Quelle est la période optimale de plantation pour le {recommended_crop} dans la région {current_region} ?",
-            "irrigation": f"Quels sont les besoins en irrigation spécifiques pour le {recommended_crop} ?",
-            "engrais": f"Quels engrais et amendements du sol recommandez-vous pour le {recommended_crop} ?",
-            "prevention": f"Comment prévenir les maladies et ravageurs communs du {recommended_crop} ?"
-        }
-
-        results_justification = {}
-        full_justification = ""
-        
-        for key, q in queries.items():
-            expert_res = await ExpertSystemService.query_expert_system(query=q, region=current_region)
-            resp_text = expert_res.final_response if expert_res else "Pas de réponse disponible."
-            results_justification[key] = resp_text
-            full_justification += f"\n\n### {key.capitalize()}\n{resp_text}"
-
-        # 4. Sauvegarde DB
-        new_rec = Recommendation(
-            id=str(uuid.uuid4()),
-            titre=f"Analyse Complète pour {recommended_crop}",
-            contenu=full_justification.strip(),
-            priorite="Normal",
-            parcelle_id=parcelle_id if parcelle_id else None,
-            user_id=str(user.id),
-            expert_metadata={
-                "source": "Service_Orchestrator",
-                "ml_confidence": ml_result.confidence,
-                "recommended_crop": recommended_crop,
-                "detailed_responses": results_justification,
-                "ml_details": ml_result.dict()
-            }
+        background_tasks.add_task(
+            RecommendationService.run_expert_system_and_notify,
+            user=user,
+            parcelle_id=parcelle_id,
+            recommended_crop=recommended_crop,
+            ml_result=ml_result,
+            current_region=current_region,
+            query=query
         )
-        db.add(new_rec)
-        db.commit()
-        db.refresh(new_rec)
-
-        # 5. Notifications
-        notif_service = NotificationService()
-        user_pref_modes = getattr(user, 'notification_modes', ['email'])
-        message_title = f"AgroPredict: Recommandation pour {recommended_crop}"
-        message_body = f"Culture recommandée: {recommended_crop}\nConfiance: {ml_result.confidence:.2f}\n\nJustification:\n{full_justification.strip()}"
-        
-        for mode in user_pref_modes:
-            try:
-                if mode == 'email':
-                    await notif_service.send_email(user.email, message_title, message_body)
-                elif mode == 'sms' and user.telephone:
-                    await notif_service.send_sms(user.telephone, message_body)
-                elif mode == 'whatsapp' and user.telephone:
-                    await notif_service.send_whatsapp(user.telephone, message_body)
-                elif mode == 'telegram':
-                    await notif_service.send_telegram(message_body)
-            except Exception as e:
-                logger.error(f"Erreur notification ({mode}): {str(e)}")
 
         from app.schemas.ai_integration import UnifiedRecommendationResponse
         return UnifiedRecommendationResponse(
             recommended_crop=recommended_crop,
             confidence_score=ml_result.confidence,
-            justification=full_justification.strip(),
-            detailed_justifications=results_justification,
+            justification="L'analyse détaillée par notre système expert est en cours de génération et vous sera envoyée d'ici quelques instants.",
+            detailed_justifications={},
             ml_details=ml_result,
             generated_at=datetime.utcnow().isoformat()
         )
+
+    @staticmethod
+    async def run_expert_system_and_notify(
+        user: any,
+        parcelle_id: Optional[str],
+        recommended_crop: str,
+        ml_result: any,
+        current_region: str,
+        query: Optional[str]
+    ):
+        """
+        Exécution asynchrone du système expert, sauvegarde en base de données et envoi des notifications.
+        """
+        from app.database import SessionLocal
+        db = SessionLocal()
+        try:
+            # 3. Système Expert (4 questions)
+            user_query = None if query in ["string", ""] else query
+    
+            queries = {
+                "plantation": user_query or f"Quelle est la période optimale de plantation pour le {recommended_crop} dans la région {current_region} ?",
+                "irrigation": f"Quels sont les besoins en irrigation spécifiques pour le {recommended_crop} ?",
+                "engrais": f"Quels engrais et amendements du sol recommandez-vous pour le {recommended_crop} ?",
+                "prevention": f"Comment prévenir les maladies et ravageurs communs du {recommended_crop} ?"
+            }
+    
+            results_justification = {}
+            full_justification = ""
+            
+            for key, q in queries.items():
+                expert_res = await ExpertSystemService.query_expert_system(query=q, region=current_region)
+                resp_text = expert_res.final_response if expert_res else "Pas de réponse disponible."
+                results_justification[key] = resp_text
+                full_justification += f"\n\n### {key.capitalize()}\n{resp_text}"
+    
+            # 4. Sauvegarde DB
+            new_rec = Recommendation(
+                id=str(uuid.uuid4()),
+                titre=f"Analyse Complète pour {recommended_crop}",
+                contenu=full_justification.strip(),
+                priorite="Normal",
+                parcelle_id=parcelle_id if parcelle_id else None,
+                user_id=str(user.id),
+                expert_metadata={
+                    "source": "Service_Orchestrator",
+                    "ml_confidence": ml_result.confidence,
+                    "recommended_crop": recommended_crop,
+                    "detailed_responses": results_justification,
+                    "ml_details": ml_result.dict()
+                }
+            )
+            db.add(new_rec)
+            db.commit()
+            db.refresh(new_rec)
+    
+            # 5. Notifications
+            notif_service = NotificationService()
+            user_pref_modes = getattr(user, 'notification_modes', ['email'])
+            
+            # Message de base (Culture recommandée)
+            base_title = f"AgroPredict: Recommandation globale"
+            base_body = f"Culture recommandée: {recommended_crop}\nConfiance: {ml_result.confidence:.2f}"
+            
+            # Préparation de tous les messages (Base + les 4 questions)
+            messages_to_send = [(base_title, base_body)]
+            for category, response_text in results_justification.items():
+                msg_title = f"AgroPredict ({category.capitalize()}): {recommended_crop}"
+                msg_body = f"Catégorie: {category.capitalize()}\n\n{response_text}"
+                messages_to_send.append((msg_title, msg_body))
+            
+            # Envoi itératif
+            for mode_raw in user_pref_modes:
+                mode = str(mode_raw).lower()
+                # If the enum value is like "NotificationMode.EMAIL", we just want "email"
+                if "." in mode:
+                    mode = mode.split(".")[-1]
+                
+                logger.info(f"Processing notifications for mode: {mode}")
+                
+                for title, body in messages_to_send:
+                    try:
+                        if mode == 'email':
+                            await notif_service.send_email(user.email, title, body)
+                            logger.info(f"Email sent successfully for '{title}'")
+                        elif mode == 'sms' and user.telephone:
+                            res = await notif_service.send_sms(user.telephone, body)
+                            logger.info(f"SMS send result for '{title}': {res}")
+                        elif mode == 'whatsapp' and user.telephone:
+                            await notif_service.send_whatsapp(user.telephone, body)
+                        elif mode == 'telegram':
+                            await notif_service.send_telegram(body)
+                    except Exception as e:
+                        logger.error(f"Erreur notification ({mode}) via background task pour '{title}': {str(e)}")
+        except Exception as e:
+            logger.error(f"Erreur globale dans le traitement asynchrone de la recommandation: {str(e)}")
+        finally:
+            db.close()

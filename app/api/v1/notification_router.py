@@ -22,23 +22,31 @@ async def test_notification(
     try:
         if request.mode == NotificationMode.EMAIL:
             target = target or current_user.email
-            await notif_service.send_email(target, "Test AgroPredict", request.message)
+            res = await notif_service.send_email(target, "Test AgroPredict", request.message)
+            if not res.get("success"):
+                raise Exception(res.get("error", "Erreur inconnue"))
         
         elif request.mode == NotificationMode.SMS:
             target = target or current_user.telephone
             if not target:
                 raise HTTPException(status_code=400, detail="Numéro de téléphone non configuré")
-            await notif_service.send_sms(target, request.message)
+            res = await notif_service.send_sms(target, request.message)
+            if not res.get("success"):
+                raise Exception(res.get("error", "Erreur inconnue"))
             
         elif request.mode == NotificationMode.WHATSAPP:
             target = target or current_user.telephone
             if not target:
                 raise HTTPException(status_code=400, detail="Numéro de téléphone non configuré")
-            await notif_service.send_whatsapp(target, request.message)
+            res = await notif_service.send_whatsapp(target, request.message)
+            if not res.get("success"):
+                raise Exception(res.get("error", "Erreur inconnue"))
             
         elif request.mode == NotificationMode.TELEGRAM:
-            # Pour Telegram, on assume que target est le chat_id ou on utilise un défaut configuré
-            await notif_service.send_telegram(request.message, chat_id=target)
+            # Pour Telegram, on assume que target est le chat_id ou on utilise un defaut configuré
+            res = await notif_service.send_telegram(request.message, chat_id=target)
+            if not res.get("success"):
+                raise Exception(res.get("error", "Erreur inconnue"))
             
         return NotificationResponse(
             success=True,

@@ -15,7 +15,7 @@ class MLService:
     PREDICT_ENDPOINT = f"{BASE_URL}/predict/batch"
 
     @staticmethod
-    async def predict_crop(soil_data_list: List[SoilData], notify: bool = False, user_email: str = None) -> MLPredictResponse:
+    async def predict_crop(soil_data_list: List[SoilData], notify: bool = False, user_email: str = None, user_telephone: str = None) -> MLPredictResponse:
         """
         Appelle le service ML pour prédire la culture la plus adaptée à partir d'un lot d'échantillons
         """
@@ -26,11 +26,7 @@ class MLService:
         
         # Configuration détaillée du timeout
         # Augmenté pour gérer les services ML lents (ex: cold start sur Render)
-        timeout = httpx.Timeout(
-            120.0,          # Global timeout (2 minutes pour le batch)
-            connect=10.0,   # Timeout de connexion
-            read=100.0      # Timeout de lecture (ML peut être lent)
-        )
+        timeout = httpx.Timeout(120.0)
 
         
         async with httpx.AsyncClient(timeout=timeout) as client:
@@ -49,24 +45,15 @@ class MLService:
                 
                 data = response.json()
                 result = MLPredictResponse(**data)
-                # Notification optionnelle
-                if notify and user_email:
+                if notify:
                     notif = NotificationService()
-                    await notif.send_email(user_email, "Résultat de prédiction ML", f"Votre prédiction: {result.recommended_crop}")
+                    crop = result.top3_global[0].culture if result.top3_global else "Inconnu"
+                    if user_email:
+                        await notif.send_email(user_email, "Résultat de prédiction ML", f"Votre prédiction: {crop}")
+                    if user_telephone:
+                        await notif.send_sms(user_telephone, f"[AgroPredict] Résultat ML: Votre prédiction est {crop}")
                 return result
                 
-            except httpx.ConnectError as e:
-                logger.error(f"Erreur de connexion (DNS/Réseau) au service ML: {str(e)}")
-                raise HTTPException(
-                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                    detail="Impossible de résoudre ou contacter le service de prédiction ML (Vérifiez l'URL ou la connexion)"
-                )
-            except httpx.TimeoutException as e:
-                logger.error(f"Timeout lors de l'appel au service ML: {str(e)}")
-                raise HTTPException(
-                    status_code=status.HTTP_504_GATEWAY_TIMEOUT,
-                    detail="Le service de prédiction ML a mis trop de temps à répondre"
-                )
             except httpx.RequestError as e:
                 logger.error(f"Erreur de requête au service ML: {str(e)}")
                 raise HTTPException(

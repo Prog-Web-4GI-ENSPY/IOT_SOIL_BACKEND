@@ -9,6 +9,7 @@ class SoilData(BaseModel):
     temperature: float = Field(..., description="Température en °C")
     humidity: float = Field(..., description="Humidité relative en %")
     ph: float = Field(..., description="Niveau de pH du sol")
+    rainfall: float = Field(0.0, description="Pluviométrie (mm) (facultatif ou 0 par défaut)")
 
 class MLSample(SoilData):
     """Un échantillon pour le service ML"""
@@ -18,14 +19,25 @@ class MLPredictRequest(BaseModel):
     """Requête pour le service ML /predict/batch"""
     samples: List[MLSample] = Field(..., max_items=10)
 
+class TopCrop(BaseModel):
+    rang: int
+    culture: str
+    confiance: float
+
+class SampleResult(BaseModel):
+    echantillon: int
+    top3: List[TopCrop]
+
+class TopCropGlobal(BaseModel):
+    rang: int
+    culture: str
+    confiance_agregee: float
+
 class MLPredictResponse(BaseModel):
-    """Réponse du service ML synchronisée avec l'API Render"""
-    recommended_crop: str  # Au lieu de majority_crop
-    confidence: float
-    total_samples: int     # Au lieu de sample_count
-    features_order: List[str]
-    all_predictions: List[str]
-    vote_details: Dict[str, int]
+    """Réponse du service ML synchronisée avec la nouvelle API."""
+    nb_echantillons: int
+    resultats_par_echantillon: List[SampleResult]
+    top3_global: List[TopCropGlobal]
 
 class ExpertSystemRequest(BaseModel):
     """Schéma requis par ExpertSystemService pour l'import"""

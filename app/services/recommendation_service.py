@@ -355,7 +355,8 @@ class RecommendationService:
                             K=max(int(m.potassium or 1), 1),  # ML service requires > 0
                             temperature=max(m.temperature or 20.0, 0.1),
                             humidity=max(m.humidity or 50.0, 0.1),
-                            ph=max(m.ph or 6.5, 0.1)
+                            ph=max(m.ph or 6.5, 0.1),
+                            rainfall=1500.0  # Default rainfall in mm/year for regions like Centre
                         ) for m in daily_measurements
                     ]
         
@@ -382,7 +383,8 @@ class RecommendationService:
 
         # 2. ML Prediction
         ml_result = await MLService.predict_crop(final_soil_data_batch)
-        recommended_crop = ml_result.recommended_crop
+        recommended_crop = ml_result.top3_global[0].culture if ml_result.top3_global else "Inconnu"
+        confidence = ml_result.top3_global[0].confiance_agregee if ml_result.top3_global else 0.0
 
         # Lancement de la tâche de fond pour l'enrichissement par le système expert et les notifications
         current_region = region or (parcelle.terrain.localite.region if parcelle and parcelle.terrain and parcelle.terrain.localite else "Centre")
@@ -399,7 +401,7 @@ class RecommendationService:
         from app.schemas.ai_integration import UnifiedRecommendationResponse
         return UnifiedRecommendationResponse(
             recommended_crop=recommended_crop,
-            confidence_score=ml_result.confidence,
+            confidence_score=confidence,
             justification="L'analyse détaillée par notre système expert est en cours de génération et vous sera envoyée d'ici quelques instants.",
             detailed_justifications={},
             ml_details=ml_result,
@@ -450,7 +452,7 @@ class RecommendationService:
                 user_id=str(user.id),
                 expert_metadata={
                     "source": "Service_Orchestrator",
-                    "ml_confidence": ml_result.confidence,
+                    "ml_confidence": ml_result.top3_global[0].confiance_agregee if ml_result.top3_global else 0.0,
                     "recommended_crop": recommended_crop,
                     "detailed_responses": results_justification,
                     "ml_details": ml_result.dict()
@@ -464,40 +466,47 @@ class RecommendationService:
             notif_service = NotificationService()
             user_pref_modes = getattr(user, 'notification_modes', ['email'])
             
-            # Message de base (Culture recommandée)
-            base_title = f"AgroPredict: Recommandation globale"
-            base_body = f"Culture recommandée: {recommended_crop}\nConfiance: {ml_result.confidence:.2f}"
-            
-            # Préparation de tous les messages (Base + les 4 questions)
-            messages_to_send = [(base_title, base_body)]
+            # ---- Préparation des messages ----
+            # Email : 1 message résumé + 4 messages détaillés (un par catégorie)
+            confidence = ml_result.top3_global[0].confiance_agregee if ml_result.top3_global else 0.0
+            email_messages = [(
+                f"AgroPredict: Recommandation globale",
+                f"Culture recommandée: {recommended_crop}\nConfiance: {confidence:.2f}%"
+            )]
             for category, response_text in results_justification.items():
-                msg_title = f"AgroPredict ({category.capitalize()}): {recommended_crop}"
-                msg_body = f"Catégorie: {category.capitalize()}\n\n{response_text}"
-                messages_to_send.append((msg_title, msg_body))
+                email_messages.append((
+                    f"AgroPredict ({category.capitalize()}): {recommended_crop}",
+                    f"Catégorie: {category.capitalize()}\n\n{response_text}"
+                ))
+
+            # SMS/WhatsApp/Telegram : 1 seul message résumé (économie de crédits)
+            short_summary = (
+                f"[AgroPredict] Culture: {recommended_crop} | Confiance: {confidence:.2f}%\n"
+                f"Détails complets envoyés par email."
+            )
             
-            # Envoi itératif
+            # ---- Envoi par canal ----
             for mode_raw in user_pref_modes:
                 mode = str(mode_raw).lower()
-                # If the enum value is like "NotificationMode.EMAIL", we just want "email"
                 if "." in mode:
                     mode = mode.split(".")[-1]
                 
                 logger.info(f"Processing notifications for mode: {mode}")
-                
-                for title, body in messages_to_send:
-                    try:
-                        if mode == 'email':
+                try:
+                    if mode == 'email':
+                        for title, body in email_messages:
                             await notif_service.send_email(user.email, title, body)
-                            logger.info(f"Email sent successfully for '{title}'")
-                        elif mode == 'sms' and user.telephone:
-                            res = await notif_service.send_sms(user.telephone, body)
-                            logger.info(f"SMS send result for '{title}': {res}")
-                        elif mode == 'whatsapp' and user.telephone:
-                            await notif_service.send_whatsapp(user.telephone, body)
-                        elif mode == 'telegram':
-                            await notif_service.send_telegram(body)
-                    except Exception as e:
-                        logger.error(f"Erreur notification ({mode}) via background task pour '{title}': {str(e)}")
+                            logger.info(f"Email sent for '{title}'")
+                    elif mode == 'sms' and user.telephone:
+                        # 1 seul SMS résumé pour économiser les crédits
+                        res = await notif_service.send_sms(user.telephone, short_summary)
+                        logger.info(f"SMS send result: {res}")
+                    elif mode == 'whatsapp' and user.telephone:
+                        await notif_service.send_whatsapp(user.telephone, short_summary)
+                    elif mode == 'telegram':
+                        await notif_service.send_telegram(short_summary)
+                except Exception as e:
+                    logger.error(f"Erreur notification ({mode}) via background task: {str(e)}")
         except Exception as e:
             logger.error(f"Erreur globale dans le traitement asynchrone de la recommandation: {str(e)}")
         finally:

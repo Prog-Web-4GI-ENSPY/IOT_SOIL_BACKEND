@@ -49,8 +49,8 @@ class Settings(BaseSettings):
     EMAILS_FROM_EMAIL: Optional[str] = None
 
     # --- AI Services ---
-    EXPERT_SYSTEM_URL: str = Field(default="https://systeme-expert-5iyu.onrender.com")
-    ML_SERVICE_URL: str = Field(default="https://crops-predictions.onrender.com")
+    EXPERT_SYSTEM_URL: str = Field(default="https://systemeexpert-production.up.railway.app")
+    ML_SERVICE_URL: str = Field(default="https://cropspredictions-production.up.railway.app")
 
     # --- CORS ---
     # Utilisez 'List' ou 'list' (avec Pydantic v2) pour les listes

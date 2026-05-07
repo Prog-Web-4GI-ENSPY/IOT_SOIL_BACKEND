@@ -15,7 +15,6 @@ import base64
 import json
 
 router = APIRouter(
-    prefix="/chirpstack",
     tags=["ChirpStack"]
 )
 
@@ -50,7 +49,11 @@ async def handle_up_event(payload: Dict[str, Any], db: Session):
     """
     try:
         # 1. Identification du Device (Capteur) via DevEUI
-        dev_eui_raw = payload.get("devEUI")
+        # Support ChirpStack v3 et v4
+        dev_eui_raw = payload.get("devEUI") or payload.get("devEui")
+        if not dev_eui_raw and "deviceInfo" in payload:
+            dev_eui_raw = payload["deviceInfo"].get("devEui") or payload["deviceInfo"].get("devEUI")
+        
         if not dev_eui_raw:
             print(f"PAYLOAD DEBUG: {payload}")
             raise HTTPException(status_code=400, detail="devEUI manquant dans le payload")

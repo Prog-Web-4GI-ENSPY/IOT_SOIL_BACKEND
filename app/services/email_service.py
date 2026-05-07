@@ -16,6 +16,10 @@ class EmailService:
         self.from_email = settings.EMAILS_FROM_EMAIL or self.smtp_user
 
     def send_email(self, to: str, subject: str, body: str) -> dict:
+        if not self.smtp_host:
+            logger.warning("SMTP_HOST non configuré. Envoi d'email ignoré.")
+            return {"success": False, "error": "SMTP_HOST non configuré"}
+
         msg = MIMEMultipart()
         msg['From'] = self.from_email
         msg['To'] = to

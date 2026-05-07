@@ -21,6 +21,10 @@ class InfobipService:
 
     async def send_sms(self, to: str, message: str, sender: str = None) -> dict:
         """Envoi de SMS via Infobip API"""
+        if not self.api_key or not self.base_url:
+            logger.warning("Infobip non configuré (API_KEY ou BASE_URL manquant). SMS ignoré.")
+            return {"success": False, "error": "Infobip non configuré"}
+
         try:
             from_number = sender or self.sender_number
             
@@ -64,6 +68,10 @@ class InfobipService:
 
     async def send_whatsapp(self, to: str, message: str) -> dict:
         """Envoi de message WhatsApp via Infobip API"""
+        if not self.api_key or not self.base_url:
+            logger.warning("Infobip non configuré (API_KEY ou BASE_URL manquant). WhatsApp ignoré.")
+            return {"success": False, "error": "Infobip non configuré"}
+
         try:
             url = f"{self.base_url}/whatsapp/1/message/text"
             

@@ -8,12 +8,25 @@ Puisque nous avons ajouté des fichiers (`Dockerfile`, `docker-compose.yml`, `.d
 
 Depuis votre machine locale :
 ```bash
-git add Dockerfile docker-compose.yml .dockerignore DEPLOYMENT.md
-git commit -m "Add Docker deployment files"
-git push origin main  # ou le nom de votre branche
+git add Dockerfile docker-compose.yml .dockerignore DEPLOYMENT.md .github/workflows/deploy.yml
+git commit -m "Add Docker deployment and CI/CD workflow"
+git push origin main
 ```
 
-## 2. Récupérer le code sur le VPS
+## 2. Configurer les Secrets GitHub
+
+Pour que l'automatisation fonctionne, vous devez ajouter les secrets suivants dans votre dépôt GitHub (**Settings > Secrets and variables > Actions**) :
+
+| Secret | Valeur |
+|--------|--------|
+| `VPS_IP` | `109.199.105.251` |
+| `VPS_USERNAME` | `root` |
+| `VPS_SSH_KEY` | Le contenu de votre clé privée (souvent dans `~/.ssh/id_ed25519`) |
+
+> [!IMPORTANT]
+> Assurez-vous que la clé publique correspondante est bien présente dans le fichier `/root/.ssh/authorized_keys` sur le VPS.
+
+## 3. Récupérer le code sur le VPS
 
 Connectez-vous à votre VPS :
 ```bash
@@ -32,7 +45,7 @@ cd IOT_SOIL_BACKEND
 git pull origin main
 ```
 
-## 2. Configuration sur le VPS
+## 4. Configuration sur le VPS
 
 Connectez-vous à votre VPS :
 ```bash
@@ -53,7 +66,7 @@ nano .env
 - `DATABASE_URL` (doit être : `postgresql://user:password@db:5432/db_name`)
 - `CHIRPSTACK_API_TOKEN`, etc.
 
-## 3. Lancement avec Docker
+## 5. Lancement avec Docker
 
 Lancez les conteneurs en arrière-plan :
 ```bash
@@ -65,7 +78,7 @@ docker compose up -d --build
 docker compose logs -f api
 ```
 
-## 4. Initialisation de la Base de Données
+## 6. Initialisation de la Base de Données
 
 Une fois les conteneurs lancés, appliquez les migrations et créez l'utilisateur admin.
 
@@ -79,7 +92,7 @@ docker compose exec api alembic upgrade head
 docker compose exec api python scripts/init_db.py
 ```
 
-## 5. Configuration Nginx (Reverse Proxy)
+## 7. Configuration Nginx (Reverse Proxy)
 
 Comme Nginx est déjà installé, vous devez ajouter une configuration pour rediriger le trafic vers le port 8000.
 
@@ -112,7 +125,7 @@ nginx -t
 systemctl restart nginx
 ```
 
-## 6. Vérification
+## 8. Vérification
 
 L'API devrait maintenant être accessible sur :
 - Documentation Swagger : `http://109.199.105.251/docs`
